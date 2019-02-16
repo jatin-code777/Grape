@@ -2,8 +2,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
-
+#include<ctime>
 #define ALPHABET_SIZE 256
+#define PAGESIZE 8192
 using namespace std;
 int occ[ALPHABET_SIZE];
 int n;
@@ -58,21 +59,28 @@ void pre_process(string& pat)
 
 void bm(string& pat,int fd)
 {
-	int i=0,j,m = lseek(fd,0,SEEK_END);//i = start
+	int i=0,j,k=0,m = lseek(fd,0,SEEK_END);//i = start
 	lseek(fd,0,SEEK_SET);
+	k += PAGESIZE;
+	char buf[PAGESIZE];
+	read(fd,buf,PAGESIZE);
 	while(i+n <= m)
 	{
-		lseek(fd,i,SEEK_SET);
-		char buf[n];
-		read(fd,buf,n);
-		for(j = n-1; j>=0 && pat[j] == buf[j]; j--);
+		
+		if(i+n >= k)
+		{
+			lseek(fd,i,SEEK_SET);
+			read(fd,buf,PAGESIZE);
+			k=i + PAGESIZE;
+		}
+		for(j = n-1; j>=0 && pat[j] == buf[PAGESIZE - k  + i + j]; j--);
 		if(j==-1)
 		{
 			cout<<"Match at "<<i<<"\n";
 			i+=s[0];
 		}
 		else
-			i += max(s[j+1],j - occ[(int)buf[j]]);
+			i += max(s[j+1],j - occ[(int)buf[PAGESIZE -k + i + j]]);
 	}
 }
 
