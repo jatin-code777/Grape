@@ -6,11 +6,12 @@
 #define ALPHABET_SIZE 256
 using namespace std;
 
-int occ[ALPHABET_SIZE];
+int occ[ALPHABET_SIZE],jt[ALPHABET_SIZE];
 int n,PAGESIZE = getpagesize();
 //n =  pattern length
 //occ[i] = last occurance index of character with ASCII value i in the pattern.
 //occ[i] = -1 --> that characeter doesn't exist in the search pattern 
+//jt is jumptable based on bad character heuristic due to mismatch at the last position
 
 vector<int> s,f;
 //f[i] = starting point of longest suffix of pat[i....n] that is also its prefix
@@ -24,6 +25,8 @@ void build_occ(string& pat)
 	memset(occ,-1,sizeof(occ));
 	for(int i=0;i<n;i++)
 		occ[(int)pat[i]] = i;
+	for(int i=0;i<ALPHABET_SIZE;i++)
+		jt[i]=n-1-occ[i];
 }
 
 void case1_good_suffix(string& pat)
@@ -60,19 +63,25 @@ void pre_process(string& pat)
 
 void bm(string& pat,int fd)
 {
-	int i=0,j,k=0,m = lseek(fd,0,SEEK_END);//i = start
+	int i=0,j,jump,k=0,m = lseek(fd,0,SEEK_END);//i = start
 	lseek(fd,0,SEEK_SET);
 	k += PAGESIZE;
 	char buf[PAGESIZE];
 	read(fd,buf,PAGESIZE);
 	while(i+n <= m)
 	{
-		
+		while(i + 3*n < k){//loop unrolled for speed
+			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
+			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
+			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
+			if(!jump) break;
+		}
 		if(i+n >= k)
 		{
 			lseek(fd,i,SEEK_SET);
 			read(fd,buf,PAGESIZE);
-			k=i + PAGESIZE;
+			k = i + PAGESIZE;
+			continue;
 		}
 		for(j = n-1; j>=0 && pat[j] == buf[PAGESIZE - k  + i + j]; j--);
 		if(j==-1)
