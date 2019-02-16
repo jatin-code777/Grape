@@ -4,13 +4,14 @@
 #include <fcntl.h>
 #include<ctime>
 #define ALPHABET_SIZE 256
-#define PAGESIZE 8192
 using namespace std;
+
 int occ[ALPHABET_SIZE];
-int n;
+int n,PAGESIZE = getpagesize();
 //n =  pattern length
 //occ[i] = last occurance index of character with ASCII value i in the pattern.
 //occ[i] = -1 --> that characeter doesn't exist in the search pattern 
+
 vector<int> s,f;
 //f[i] = starting point of longest suffix of pat[i....n] that is also its prefix
 //f[i] >= pattern length --> such a suffix doesn't exist
@@ -84,15 +85,14 @@ void bm(string& pat,int fd)
 	}
 }
 
-int main()
+int main(int argc,char* argv[])
 {
 	int n; 
-	string pat,path;
-	cin>>pat>>path;
+	string pat = argv[1];
 	n = pat.length();
 	s.resize(n+1); f.resize(n+1);
 	pre_process(pat);
-	int fd = open(path.c_str(),O_RDONLY);
+	int fd = open(argv[2],O_RDONLY);
 	bm(pat,fd);	
 	return 0;		
 }
