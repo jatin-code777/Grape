@@ -6,34 +6,47 @@
 #include <queue>
 #include <mutex>
 
+class autoRAII_lock {
+	public:
+		autoRAII_lock(std::mutex& m)
+			:mutex(m)
+		{
+			mutex.lock();
+		}
+		~autoRAII_lock()
+		{
+			mutex.unlock();
+		}
+	private:
+		std::mutex& mutex;
+};
 
 template <class T>
 class Atomic_Queue {
 	public:
-		bool empty() const
+
+		bool empty()
 		{
-			mutex.lock();
+			autoRAII_lock lock(mutex);
 			bool ret = Q.empty();
-			mutex.unlock();
 			return ret;
 		}
 
 		void push(const T& val)
 		{
+			autoRAII_lock lock(mutex);
 			Q.push(val);
 		}
 		void push(T&& val)
 		{
-			mutex.lock();
+			autoRAII_lock lock(mutex);
 			Q.push(std::move(val));
-			mutex.unlock();
 		}
 
 		T pop()
 		{
-			mutex.lock();
+			autoRAII_lock lock(mutex);
 			T ret = std::move(Q.top());
-			mutex.unlock();
 			return ret;
 		}
 
@@ -41,7 +54,5 @@ class Atomic_Queue {
 		std::mutex mutex;
 		std::queue <T> Q;
 };
-
-
 
 #endif
