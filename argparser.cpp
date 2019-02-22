@@ -1,89 +1,98 @@
 #include <getopt.h>
-#include<iostream>
+#include <iostream>
+#include "argparser.h"
+
 /// Flags set by ‘--help’,'--usage', '--version' 
-static int help_flag=0, usage_flag=0,version_flag=0;
 
 /**
  * @brief      prints help for our program
  */
-void print_help()
+void parser::print_help()
 {
-	std::cout<<"Usage: grape [OPTION]... PATTERN [FILE]"<<std::endl;
-	std::cout<<"Search for PATTERN in each FILE."<<std::endl;
-	std::cout<<"Example: grape -i 'hello world' main.c"<<std::endl;
-	std::cout<<""<<std::endl;
-	std::cout<<"Pattern selection and interpretation:"<<std::endl;
-	std::cout<<" -F,  --fixed-string        PATTERN is a set of newline-separated strings"<<std::endl;
-	std::cout<<" -G,  --basic-regexp        PATTERN is a basic regular expression (default)"<<std::endl;
-	std::cout<<" -e,  --regexp=PATTERN      use PATTERN for matching"<<std::endl;
-	std::cout<<" -i,  --ignore-case         ignore case distinctions"<<std::endl;
-	std::cout<<"Miscellaneous:"<<std::endl;
-	std::cout<<" -v,  --invert-match         select non-matching lines"<<std::endl;
-	std::cout<<"       --version             display version information and exit"<<std::endl;
-	std::cout<<"       --help                display this help text and exit"<<std::endl;
-	std::cout<<"       --usage               display usage text and exit"<<std::endl;
-	std::cout<<""<<std::endl;
-	std::cout<<"Output control:"<<std::endl;
-	std::cout<<" -n,  --line-number          print line number with output lines"<<std::endl;
-	std::cout<<" -r,  --recursive            recursive search inside directory"<<std::endl;
+  printf("Usage: grape [OPTION]... PATTERN [FILE]\n");
+  printf("Search for PATTERN in each FILE.\n");
+  printf("Example: grape -i 'hello world' main.c\n");
+  printf("\n");
+  printf("Pattern selection and interpretation:\n");
+  printf(" -F,   --fixed-string         PATTERN is a normal string\n");
+  printf(" -G,   --basic-regexp         PATTERN is a basic regular expression (default)\n");
+  printf(" -e,   --regexp=PATTERN       use PATTERN for matching\n");
+  printf(" -i,   --ignore-case          ignore case distinctions\n");
+  printf("Miscellaneous:\n");
+  printf(" -v,   --invert-match        select non-matching lines\n");
+  printf("       --version             display version information and exit\n");
+  printf("       --help                display this help text and exit\n");
+  printf("       --usage               display usage text and exit\n");
+  printf("\n");
+  printf("Output control:\n");
+  printf(" -n,   --line-number         print line number with output lines\n");
+  printf(" -r,   --recursive           recursive search inside directory\n");
 }
 /**
  * @brief      prints usage instructions
  */
-void print_usage()
+void parser::print_usage()
 {
-	std::cout<<"Usage: grape [OPTION]... PATTERN [FILE]"<<std::endl;
-	std::cout<<"for more detailed discription use --help"<<std::endl;
+  printf("Usage: grape [OPTION]... PATTERN [FILE]\n");
+  printf("for more detailed discription use --help\n");
 }
 
 /**
  * @brief      prints version and copyright information
  */
-void print_version()
+void parser::print_version()
 {
-	std::cout<<"grape (multithreaded) 1.0.0"<<std::endl;
-	std::cout<<"Copyright (c)"<<std::endl;
-	std::cout<<"License "<<std::endl;
-	std::cout<<"This is free software: you are free to change and redistribute it."<<std::endl;
-	std::cout<<"There is NO WARRANTY, to the extent permitted by law."<<std::endl;
-	std::cout<<"Written by Dhananjay Raut, Sahil Shah, Jatin Sharma and Raja Naik"<<std::endl;
+  printf("grape (multithreaded) 1.0.0\n");
+  printf("Copyright (c)\n");
+  printf("License \n");
+  printf("This is free software: you are free to change and redistribute it.\n");
+  printf("There is NO WARRANTY, to the extent permitted by law.\n");
+  printf("Written by Dhananjay Raut, Sahil Shah, Jatin Sharma and Raja Naik\n");
 }
 
-
-int main (int argc, char **argv)
+/**
+ * @brief      parse Command line input
+ *
+ * @param[in]  argc  The argc
+ * @param      argv  The argv
+ *
+ * @return     return 0 on sucess returns 1 else 
+ */
+int parser::parse(int argc, char **argv)
 {
-int c;
-bool F_flag=0,r_flag=0,i_flag=0,v_flag=0,G_flag=0,n_flag=0;
-char initialpath[] = ".";
-char *path = initialpath;
-char *PATTERN = NULL;
-static struct option long_options[] =
-{
-  /// These options set a flag.
-  {"usage",   no_argument,  &usage_flag,  1},
-  {"help",    no_argument,  &help_flag,   1},
-  {"version", no_argument,  &version_flag,1},
-  /// These options don’t set a flag.We distinguish them by their indices.
-  {"regexp",        required_argument, 0, 'F'},
-  {"fixed-string",  required_argument, 0, 'F'},
-  {"recursive",     no_argument,       0, 'r'},
-  {"ignore-case",   no_argument,       0, 'i'},
-  {"invert-match",  no_argument,       0, 'v'},
-  {"basic-regex",   required_argument, 0, 'G'},
-  {"line-number",   no_argument,       0, 'n'},
-  {0, 0, 0, 0}
-};
-int option_index = 0;
-if(argc==1)
-{
-	print_usage();
-	return 0;
-}
-  while (1)
+  static int help_flag=0, usage_flag=0,version_flag=0;
+  int c;
+  bool F_flag=0,r_flag=0,i_flag=0,v_flag=0,G_flag=0,n_flag=0;
+  char initialpath[] = ".";
+  char *path = initialpath;
+  char *PATTERN = NULL;
+  int p = 0;
+  static struct option long_options[] =
+  {
+    /// These options set a flag.
+    {"usage",   no_argument,  &usage_flag,  1},
+    {"help",    no_argument,  &help_flag,   1},
+    {"version", no_argument,  &version_flag,1},
+    /// These options don’t set a flag.We distinguish them by their indices.
+    {"regexp",        optional_argument, 0, 'F'},
+    {"fixed-string",  optional_argument, 0, 'F'},
+    {"recursive",     no_argument,       0, 'r'},
+    {"ignore-case",   no_argument,       0, 'i'},
+    {"invert-match",  no_argument,       0, 'v'},
+    {"basic-regex",   optional_argument, 0, 'G'},
+    {"line-number",   no_argument,       0, 'n'},
+    {0, 0, 0, 0}
+  };
+  int option_index = 0;
+  if(argc==1){
+    print_usage();
+    return 0;
+  }
+  while(1)
     {
       /// getopt_long stores the option index here.
       option_index = 0;
-      c = getopt_long(argc, argv, "F:e:riyvG:n",long_options, &option_index);
+      c = getopt_long(argc, argv, "F::e::riyvG::n",long_options, &option_index);
 
       /// Detect the end of the options.
       if (c == -1) break;
@@ -92,126 +101,123 @@ if(argc==1)
         {
         case 0:
           /// If this option set a flag, do nothing else now.
-          if (long_options[option_index].flag != 0)
-            break;
-          printf ("option %s", long_options[option_index].name);
-          if (optarg)
-            printf (" with arg %s", optarg);
-          printf ("\n");
+          if (long_options[option_index].flag != 0) break;
+          printf("something is wrong\n");
           break;
-
         case 'F':
-          if (G_flag)
-          {
-          	printf("only one PATTERN is allowed\n");
-          	return 0;
+          if (G_flag){
+            printf("only one type of PATTERN is allowed\n");
+            return 1;
           }
-          else
-          {
-          	F_flag = 1;
-          	PATTERN = optarg;
+          else{
+            F_flag = 1;
+            if(optarg!=NULL){
+                PATTERN = optarg;
+                p = 1;
+              }
           }
           break;
         case 'e':
-          if (G_flag)
-          {
-          	printf("only one PATTERN is allowed\n");
-          	return 0;
+          if (G_flag){
+            printf("only one type of PATTERN is allowed\n");
+            return 1;
           }
-          else
-          {
-          	F_flag = 1;
-          	PATTERN = optarg;
+          else{
+            F_flag = 1;
+            if(optarg!=NULL){
+                PATTERN = optarg;
+                p = 1;
+              }
           }
           break;
-
         case 'r':
           r_flag=1;
           break;
-
         case 'i':
           i_flag=1;
           break;
-
         case 'y':
           i_flag=1;
           break;
-
         case 'v':
           v_flag=1;
           break;
-
         case 'G':
-          if (F_flag)
-          {
-          	printf("only one PATTERN is allowed\n");
-          	return 0;
+          if (F_flag){
+            printf("only one type of PATTERN is allowed\n");
+            return 1;
           }
-          else
-          {
-          	G_flag = 1;
-          	PATTERN = optarg;
+          else{
+            G_flag = 1;
+            if(optarg!=NULL){
+                PATTERN = optarg;
+                p = 1;
+              }
           }
-		  break;
-
+          break;
         case 'n':
           n_flag=1;
           break;
-        
         case '?':
-          printf("Use --help to see options avilable\n");
-          return 0;
           /// getopt_long already printed an error message.
+          printf("Use --help to see options avilable\n");
+          return 1;
           break;
-
         default:
           abort();
         }
     }
 
- 	 /* Instead of reporting '--help’ as they are encountered,
-     we report the final status resulting from them. */
-  	if (help_flag)
-    {
-    	print_help();
-    	return 0;
+  /* Instead of reporting '--help’ as they are encountered,
+   we report the final status resulting from them. */
+  if (help_flag){
+    print_help();
+    return 0;
+  }
+  if(usage_flag){
+    print_usage();
+    return 0;
+  }
+  if(version_flag){
+    print_version();
+    return 0;
+  }
+  for(int i=0; optind < argc; optind++ ,i++)
+  {
+  	if(i==1){
+      if (p==1) path = argv[optind];
+			else{
+          printf("non-option argument found %s\n",argv[optind]);
+          return 1;
+        }
     }
-
-    if(usage_flag)
-    {
-    	print_usage();
-    	return 0;
-    }
-    if(version_flag)
-    {
-    	print_version();
-    	return 0;
-    }
-
-    for(int i=0; optind < argc; optind++ ,i++)
-    {
-    	if(i==1) path = argv[optind];
- 		else if (i==0)
-    	{
-    		if (F_flag || G_flag)
-    		{
-    			printf("only one PATTERN is allowed\n");
-    			return 0;
-    		}
-    		else PATTERN = argv[optind];
-		}
-		else
-		{
-			printf("non-option argument found %s\n",argv[optind]);
-			return 0;
-		}
-	}
-	printf("%s %s\n",path,PATTERN);
+    else if (i==0){
+      if (F_flag || G_flag){
+  			if(p == 0) PATTERN = argv[optind];
+        else path = argv[optind];
+      }
+      else{
+        PATTERN = argv[optind];
+        F_flag = 1;
+      }
+      p = 1;
+	  }
+	  else{
+		printf("non-option argument found %s\n",argv[optind]);
+		return 1;
+	  }
+  }
+  if(p==0)
+  {
+    print_usage();
+    return 1;
+  }
+	printf("pattern : %s\npath : %s\n",PATTERN,path);
 	printf("F_flag:%d\n",F_flag);
 	printf("r_flag:%d\n",r_flag);
 	printf("i_flag:%d\n",i_flag);
 	printf("v_flag:%d\n",v_flag);
 	printf("G_flag:%d\n",G_flag);
 	printf("n_flag:%d\n",n_flag);
-  exit (0);
+  return 0;
 }
