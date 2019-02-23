@@ -67,16 +67,17 @@ void parser::print_version()
   int return_value = 0;
 };*/
 
+char initialpath[] = ".";
 struct parser::output parser::parse(int argc, char **argv)
 {
   static int help_flag=0, usage_flag=0,version_flag=0;
   int c;
   bool F_flag=0,r_flag=0,i_flag=0,v_flag=0,G_flag=0,n_flag=0;
-  char initialpath[] = ".";
   char *path = initialpath;
   char *PATTERN = NULL;
   int p = 0;
   struct output ret;
+  //ret.PATH = path;
   static struct option long_options[] =
   {
     /// These options set a flag.
@@ -233,13 +234,6 @@ struct parser::output parser::parse(int argc, char **argv)
     ret.return_value = 1; 
     return ret;
   }
-	printf("pattern : %s\npath : %s\n",PATTERN,path);
-	printf("F_flag:%d\n",F_flag);
-	printf("r_flag:%d\n",r_flag);
-	printf("i_flag:%d\n",i_flag);
-	printf("v_flag:%d\n",v_flag);
-	printf("G_flag:%d\n",G_flag);
-	printf("n_flag:%d\n",n_flag);
   ret.PATTERN = PATTERN;
   ret.PATH = path;
   ret.F_flag = F_flag;
@@ -249,6 +243,13 @@ struct parser::output parser::parse(int argc, char **argv)
   ret.G_flag =G_flag;
   ret.n_flag =n_flag;
   ret.return_value = 0;
+  printf("pattern : %s\npath : %s\n",ret.PATTERN,ret.PATH);
+  printf("F_flag:%d\n",F_flag);
+  printf("r_flag:%d\n",r_flag);
+  printf("i_flag:%d\n",i_flag);
+  printf("v_flag:%d\n",v_flag);
+  printf("G_flag:%d\n",G_flag);
+  printf("n_flag:%d\n",n_flag);
   return ret;
   
 }
