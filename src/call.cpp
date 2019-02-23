@@ -4,6 +4,7 @@
 #include "call.h"
 #include "BM.h"
 char * paat;
+bool nflag_ftw = 0;
 int call::display_info(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
 {
     if (typeflag == FTW_F)
@@ -11,7 +12,8 @@ int call::display_info(const char *fpath, const struct stat *sb, int typeflag, s
         //typeflag indicates  normal file
         //printf("normal file %c\n",pat[0]);
         printf("BM called at %s with pattern %s\n",fpath, paat);
-        BM::BM(fpath);
+        if(nflag_ftw) BM::BM_N(fpath);
+        else BM::BM(fpath);
         //push fpath to threadpool queue 
     }
     else if (typeflag==FTW_D); //typeflag indicates directory
@@ -33,8 +35,9 @@ int call::call(struct parser::output ret)
 {
   paat = ret.PATTERN;
   char* path = ret.PATH;
+  nflag_ftw = ret.n_flag;
   int flags = 0;
-  BM::pre_process(paat);
+  BM::pre_process(paat,ret.i_flag);
   if(nftw(path, display_info, 20, flags)== -1) 
   {
     perror("grape");
