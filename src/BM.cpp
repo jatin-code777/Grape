@@ -3,13 +3,15 @@
 #include <cstring>
 #include <unistd.h>
 #include <fcntl.h>
+#include <functional>
 #include "BM.h"
 #define ALPHABET_SIZE 256
 using namespace std;
 
 
-auto comp = [](char a, char b) ->bool{ return a==b ;};//general == character comparision
-auto comp_ig = [](char a, char b) ->bool{ return (a|' ') == (b|' ') ; };//ignore case comparator
+auto comp = [](char a, char b) { return a==b ;};//general == character comparision
+auto comp_ig = [](char a, char b) { return (a|' ') == (b|' ') ; };//ignore case comparator
+function<bool(char,char)> eq;
 int occ[ALPHABET_SIZE],jt[ALPHABET_SIZE];
 int n,PAGESIZE = getpagesize();
 char* pat;
@@ -42,7 +44,6 @@ void BM::build_occ(char* pat)
 
 void BM::case1_good_suffix(char* pat)
 {
-	auto eq = ignore_case?comp_ig:comp;
 	int i = n + 1, j = n + 2;
 	while(i>0)
 	{
@@ -68,6 +69,7 @@ void BM::case2_good_suffix(char* pat)
 
 void BM::pre_process(char* patt, bool ic)
 {
+	eq = ic?comp_ig:comp;
 	ignore_case = ic;
 	pat = patt;
 	n = strlen(pat);
@@ -79,7 +81,6 @@ void BM::pre_process(char* patt, bool ic)
 
 int BM::BM(const char* path)
 {
-	auto eq = ignore_case?comp_ig:comp;
 	int fd = open(path,O_RDONLY);
 	if(fd == -1) return 1;
 	int i=0,j,jump,k=0,m = lseek(fd,0,SEEK_END);//i = start
@@ -119,7 +120,6 @@ int BM::BM(const char* path)
 
 int BM::BM_N(const char* path)
 {
-	auto eq = ignore_case?comp_ig:comp;
 	int fd = open(path,O_RDONLY);
 	if(fd == -1) return 1;
 	int i=0,j,jump,k=0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
@@ -150,15 +150,15 @@ int BM::BM_N(const char* path)
 			k = i + PAGESIZE;
 			continue;
 		}
-		for(j = n-1; j>=0 && eq(pat[j],buf[PAGESIZE - k  + i + j]); j--);
+		for(j = n-1; j>=0 && eq(pat[j],buf[ i - k + PAGESIZE + j ]); j--);
 		if(j==-1)
 		{
 			printf("%s:%d:\n",path,line_no);
 			i += s[0];
 		}
 		else{
-			jump = max(s[j+1],j - occ[(int)buf[PAGESIZE - k + i + j]]);
-			for(ch = 0; ch<jump; ch++)	if(buf[i - k + PAGESIZE + ch]=='\n') line_no++;
+			jump = max(s[j+1],j - occ[(int)buf[ i - k + PAGESIZE + j ]]);
+			for(ch = 0; ch<jump; ch++)	if(buf[ i - k + PAGESIZE + ch ]=='\n') line_no++;
 			i += jump;
 		}
 	}
