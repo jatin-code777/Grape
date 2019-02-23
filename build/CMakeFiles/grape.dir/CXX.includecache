@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/BM.h
+
+../include/argparser.h
+
+../include/call.h
+argparser.h
+../include/argparser.h
+ftw.h
+-
+
+/home/dhananjay/Desktop/POPL-project/concurrency-7/main.cpp
+iostream
+-
+argparser.h
+/home/dhananjay/Desktop/POPL-project/concurrency-7/argparser.h
+call.h
+/home/dhananjay/Desktop/POPL-project/concurrency-7/call.h
+BM.h
+/home/dhananjay/Desktop/POPL-project/concurrency-7/BM.h
+

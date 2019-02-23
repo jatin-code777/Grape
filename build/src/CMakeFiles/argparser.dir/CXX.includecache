@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/argparser.h
+
+/home/dhananjay/Desktop/POPL-project/concurrency-7/src/argparser.cpp
+getopt.h
+-
+iostream
+-
+argparser.h
+/home/dhananjay/Desktop/POPL-project/concurrency-7/src/argparser.h
+

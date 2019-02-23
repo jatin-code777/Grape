@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/BM.h
+
+/home/dhananjay/Desktop/POPL-project/concurrency-7/src/BM.cpp
+iostream
+-
+vector
+-
+cstring
+-
+unistd.h
+-
+fcntl.h
+-
+BM.h
+/home/dhananjay/Desktop/POPL-project/concurrency-7/src/BM.h
+

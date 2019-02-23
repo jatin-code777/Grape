@@ -1,0 +1,8 @@
+cmake_minimum_required (VERSION 2.6)
+project(grape)
+include_directories(include)
+add_subdirectory(src)
+add_executable(grape main.cpp)
+target_link_libraries (grape call)
+target_link_libraries (grape argparser)
+target_link_libraries (grape BM)
