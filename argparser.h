@@ -18,6 +18,14 @@ namespace parser {
    */
   void print_version();
   
+  struct output
+  {
+  char * PATTERN;
+  char * PATH;
+  bool F_flag=0,r_flag=0,i_flag=0,v_flag=0,G_flag=0,n_flag=0;
+  int return_value = 0;
+  };
+
   /**
    * @brief      parse the Command line arguments
    *
@@ -26,6 +34,6 @@ namespace parser {
    *
    * @return     sucess value
    */
-  int parse(int argc, char ** argv);
+  struct output parse(int argc, char ** argv);
 }
 #endif

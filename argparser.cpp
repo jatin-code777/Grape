@@ -18,6 +18,7 @@ void parser::print_help()
   printf(" -G,   --basic-regexp         PATTERN is a basic regular expression (default)\n");
   printf(" -e,   --regexp=PATTERN       use PATTERN for matching\n");
   printf(" -i,   --ignore-case          ignore case distinctions\n");
+  printf("\n");
   printf("Miscellaneous:\n");
   printf(" -v,   --invert-match        select non-matching lines\n");
   printf("       --version             display version information and exit\n");
@@ -58,7 +59,15 @@ void parser::print_version()
  *
  * @return     return 0 on sucess returns 1 else 
  */
-int parser::parse(int argc, char **argv)
+/*struct output
+{
+  char * PATTERN;
+  char * PATH;
+  bool F_flag=0,r_flag=0,i_flag=0,v_flag=0,G_flag=0,n_flag=0;
+  int return_value = 0;
+};*/
+
+struct parser::output parser::parse(int argc, char **argv)
 {
   static int help_flag=0, usage_flag=0,version_flag=0;
   int c;
@@ -67,6 +76,7 @@ int parser::parse(int argc, char **argv)
   char *path = initialpath;
   char *PATTERN = NULL;
   int p = 0;
+  struct output ret;
   static struct option long_options[] =
   {
     /// These options set a flag.
@@ -86,7 +96,8 @@ int parser::parse(int argc, char **argv)
   int option_index = 0;
   if(argc==1){
     print_usage();
-    return 0;
+    ret.return_value = 1;
+    return ret;
   }
   while(1)
     {
@@ -107,7 +118,8 @@ int parser::parse(int argc, char **argv)
         case 'F':
           if (G_flag){
             printf("only one type of PATTERN is allowed\n");
-            return 1;
+            ret.return_value = 1;
+            return ret;
           }
           else{
             F_flag = 1;
@@ -120,7 +132,8 @@ int parser::parse(int argc, char **argv)
         case 'e':
           if (G_flag){
             printf("only one type of PATTERN is allowed\n");
-            return 1;
+            ret.return_value = 1; 
+            return ret;
           }
           else{
             F_flag = 1;
@@ -145,7 +158,8 @@ int parser::parse(int argc, char **argv)
         case 'G':
           if (F_flag){
             printf("only one type of PATTERN is allowed\n");
-            return 1;
+            ret.return_value = 1; 
+            return ret;
           }
           else{
             G_flag = 1;
@@ -161,7 +175,8 @@ int parser::parse(int argc, char **argv)
         case '?':
           /// getopt_long already printed an error message.
           printf("Use --help to see options avilable\n");
-          return 1;
+          ret.return_value = 1; 
+          return ret;
           break;
         default:
           abort();
@@ -172,23 +187,27 @@ int parser::parse(int argc, char **argv)
    we report the final status resulting from them. */
   if (help_flag){
     print_help();
-    return 0;
+    ret.return_value = 1; 
+    return ret;
   }
   if(usage_flag){
     print_usage();
-    return 0;
+    ret.return_value = 1; 
+    return ret;
   }
   if(version_flag){
     print_version();
-    return 0;
+    ret.return_value = 1; 
+    return ret;
   }
-  for(int i=0; optind < argc; optind++ ,i++)
+  for(int i=0; optind < argc; optind++,i++)
   {
   	if(i==1){
       if (p==1) path = argv[optind];
 			else{
           printf("non-option argument found %s\n",argv[optind]);
-          return 1;
+          ret.return_value = 1; 
+          return ret;
         }
     }
     else if (i==0){
@@ -204,13 +223,15 @@ int parser::parse(int argc, char **argv)
 	  }
 	  else{
 		printf("non-option argument found %s\n",argv[optind]);
-		return 1;
+		ret.return_value = 1; 
+    return ret;
 	  }
   }
   if(p==0)
   {
     print_usage();
-    return 1;
+    ret.return_value = 1; 
+    return ret;
   }
 	printf("pattern : %s\npath : %s\n",PATTERN,path);
 	printf("F_flag:%d\n",F_flag);
@@ -219,5 +240,15 @@ int parser::parse(int argc, char **argv)
 	printf("v_flag:%d\n",v_flag);
 	printf("G_flag:%d\n",G_flag);
 	printf("n_flag:%d\n",n_flag);
-  return 0;
+  ret.PATTERN = PATTERN;
+  ret.PATH = path;
+  ret.F_flag = F_flag;
+  ret.r_flag =r_flag;
+  ret.i_flag =i_flag;
+  ret.v_flag =v_flag;
+  ret.G_flag =G_flag;
+  ret.n_flag =n_flag;
+  ret.return_value = 0;
+  return ret;
+  
 }

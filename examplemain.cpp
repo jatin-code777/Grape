@@ -1,9 +1,10 @@
-#define _XOPEN_SOURCE 500
+//#define _XOPEN_SOURCE 500
 #include <ftw.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
+#include <iostream>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <string.h>
+//#include <stdint.h>
 char * pat;
 static int display_info(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
 {
