@@ -1,6 +1,7 @@
 #include <iostream>
 #include "argparser.h"
 #include "call.h"
+#include "BM.h"
 int main(int argc, char* argv[])
 {
 

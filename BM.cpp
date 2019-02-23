@@ -1,10 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
-#include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <ctime>
+#include "BM.h"
 #define ALPHABET_SIZE 256
 using namespace std;
 
@@ -22,7 +21,7 @@ vector<int> s,f;
 //s[i] = shift to be made based on good suffix heuristics, when index
 //s[i] is the MINIMUM shift such that the part that is already matched matches, and the mismatched character gets changed
 
-void build_occ(char* pat)
+void BM::build_occ(char* pat)
 {
 	n = strlen(pat);
 	memset(occ,-1,sizeof(occ));
@@ -32,7 +31,7 @@ void build_occ(char* pat)
 		jt[i]=n-1-occ[i];
 }
 
-void case1_good_suffix(char* pat)
+void BM::case1_good_suffix(char* pat)
 {
 	int i = n + 1, j = n + 2;
 	while(i>0)
@@ -47,7 +46,7 @@ void case1_good_suffix(char* pat)
 	}
 }
 
-void case2_good_suffix(char* pat)
+void BM::case2_good_suffix(char* pat)
 {
 	int i=0,j=f[0];
 	for(;i<=n;i++)
@@ -57,7 +56,7 @@ void case2_good_suffix(char* pat)
 	}
 }
 
-void pre_process(char* patt)
+void BM::pre_process(char* patt)
 {
 	pat = patt;
 	n = strlen(pat);
@@ -67,8 +66,9 @@ void pre_process(char* patt)
 	case2_good_suffix(pat);//Compute when already matched part only partially exists in the remaining pattern
 }
 
-int BM(char* path)
+int BM::BM(const char* path)
 {
+	//cout<<"fd"<<endl;
 	int fd = open(path,O_RDONLY);
 	if(fd == -1) return 1;
 	int i=0,j,jump,k=0,m = lseek(fd,0,SEEK_END);//i = start
@@ -76,15 +76,17 @@ int BM(char* path)
 	k += PAGESIZE;
 	char buf[PAGESIZE];
 	read(fd,buf,PAGESIZE);
+	//cout<<fd<<endl;
+		//printf("%d %d %d",i,n,m);
 	while(i+n <= m)
 	{
-		while(i + 3*n < k){//loop unrolled for speed
+		while(i + 3*n < min(m,k)){//loop unrolled for speed
 			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
 			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
 			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
 			if(!jump) break;
 		}
-		if(i+n >= k)
+		if(i+n > min(m,k))
 		{
 			lseek(fd,i,SEEK_SET);
 			read(fd,buf,PAGESIZE);
@@ -100,14 +102,14 @@ int BM(char* path)
 		else
 			i += max(s[j+1],j - occ[(int)buf[PAGESIZE -k + i + j]]);
 	}
+	close(fd);
 	return 0;
 }
 
-int BM_L(char* path)
+int BM::BM_L(const char* path)
 {
 	int fd = open(path,O_RDONLY);
 	if(fd == -1) return 1;
-	bool found = 0;
 	int i=0,j,jump,k=0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
 	lseek(fd,0,SEEK_SET);
 	k += PAGESIZE;
@@ -115,7 +117,7 @@ int BM_L(char* path)
 	read(fd,buf,PAGESIZE);
 	while(i+n <= m)
 	{
-		while(i + 3*n < k){//loop unrolled for speed
+		while(i + 3*n < min(m,k)){//loop unrolled for speed
 			jump = jt[(int)buf[i - k + PAGESIZE + n - 1]];
 			for(ch = 0; ch<jump; ch++) if( buf[ i - k + PAGESIZE + ch ]=='\n' ) line_no++;
 			i += jump;
@@ -129,7 +131,7 @@ int BM_L(char* path)
 			i += jump;
 			if(!jump) break;
 		}
-		if(i+n >= k)
+		if(i+n > min(m,k))
 		{
 			lseek(fd,i,SEEK_SET);
 			read(fd,buf,PAGESIZE);
@@ -148,13 +150,14 @@ int BM_L(char* path)
 			i += jump;
 		}
 	}
+	close(fd);
 	return 0;
 }
 
 /*int main()
 {
-	char pat[5],path[50];
+	char pat[20],path[50];
 	scanf("%s %s",pat,path);
-	pre_process(pat);
-	BM(path);
+	BM::pre_process(pat);
+	BM::BM(path);
 }*/

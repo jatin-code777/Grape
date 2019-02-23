@@ -2,15 +2,16 @@
 #include <iostream>
 #include "argparser.h"
 #include "call.h"
-char * pat;
+#include "BM.h"
+char * paat;
 int call::display_info(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
 {
     if (typeflag == FTW_F)
     { 
         //typeflag indicates  normal file
         //printf("normal file %c\n",pat[0]);
-        printf("BM called at %s with pattern %s\n",fpath, pat);
-
+        printf("BM called at %s with pattern %s\n",fpath, paat);
+        BM::BM(fpath);
         //push fpath to threadpool queue 
     }
     else if (typeflag==FTW_D); //typeflag indicates directory
@@ -30,9 +31,10 @@ bool call::is_dir(const char* path) {
 }
 int call::call(struct parser::output ret)
 {
-  pat = ret.PATTERN;
+  paat = ret.PATTERN;
   char* path = ret.PATH;
   int flags = 0;
+  BM::pre_process(paat);
   if(nftw(path, display_info, 20, flags)== -1) 
   {
     perror("grape");
