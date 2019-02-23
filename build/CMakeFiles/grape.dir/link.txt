@@ -1,1 +1,0 @@
-/usr/bin/c++    -rdynamic CMakeFiles/grape.dir/main.cpp.o  -o grape src/libcall.a src/libargparser.a src/libBM.a 

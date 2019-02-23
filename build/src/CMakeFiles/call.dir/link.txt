@@ -1,2 +1,0 @@
-/usr/bin/ar qc libcall.a  CMakeFiles/call.dir/call.cpp.o
-/usr/bin/ranlib libcall.a

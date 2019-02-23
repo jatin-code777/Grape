@@ -1,2 +1,0 @@
-/usr/bin/ar qc libBM.a  CMakeFiles/BM.dir/BM.cpp.o
-/usr/bin/ranlib libBM.a
