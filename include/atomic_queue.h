@@ -5,7 +5,7 @@
 
 #include <queue>
 #include <mutex>
-
+#include <utility>
 
 /**
  * @brief Namespace for internal detail.
@@ -85,7 +85,21 @@ namespace detail {
 			/// Since we don't want to make an extra copy
 			T ret = std::move(Q.top());
 			Q.pop();
-			return ret;
+			return std::move(ret);
+		}
+
+		/**
+		 * @brief Overloaded utility of pop for better exception handling
+		 * 
+		 * @param ret returns true if pop was succesfull
+		 */
+		bool pop(T &ret)
+		{
+			autoRAII_lock lock(mutex);
+			if(Q.empty()) return 0;
+			ret = std::move(Q.top());
+			Q.pop();
+			return 1;
 		}
 
 	private:
