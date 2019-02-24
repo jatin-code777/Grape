@@ -144,8 +144,8 @@ namespace thread_manager {
 		auto push(Func_t&& func, Param_t&&... params)
 		{
 			using std::placeholders;
-			auto func_pack = std::make_shared< std::packaged_task<decltype(f(7,rest...))(int)> > (
-				std::bind(std::forward<F>(f) , _1 , std::forward<Rest>(rest)...);
+			auto func_pack = std::make_shared< std::packaged_task<decltype(func(7,params...))(int)> > (
+				std::bind(std::forward<Func_t>(func) , _1 , std::forward<Param_t>(params)...);
 			)
 			auto f = new std::function<void(int)>(
 						[func_pack](int id) { (*func_pack)(id); }
@@ -158,17 +158,17 @@ namespace thread_manager {
 		}
 
 
-		template <class F>
-		auto push(F&& f)
+		template <class Func_t>
+		auto push(Func_t&& func)
 		{
 			using std::placeholders;
-			auto func_pack = std::make_shared< std::packaged_task<decltype(f(7))(int)> > (
-				std::forward<F>(f);
+			auto func_pack = std::make_shared< std::packaged_task<decltype(func(7))(int)> > (
+				std::forward<Func_t>(func);
 			)
 			auto f = new std::function<void(int)>(
 						[func_pack](int id) { (*func_pack)(id); }
 					);
-			Q.push(f);
+			Q.push(func);
 			detail::autoRAII_lock lock(mutex);
 			cv.notify_one();
 			return func_pack->get_future();
