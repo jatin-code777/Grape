@@ -1,4 +1,4 @@
-language:cpp
+language: cpp
 compiler:
   - gcc
 branches:
@@ -13,6 +13,6 @@ matrix:
           packages:
             - cmake
       env:
-         - MATRIX_EVAL="CC=gcc && CXX=g++"
- script:
-   - mkdir build && cd build && cmake .. && make
+        - MATRIX_EVAL="CC=gcc && CXX=g++"
+script:
+  - mkdir build && cd build && cmake .. && make
