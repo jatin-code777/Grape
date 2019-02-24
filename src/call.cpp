@@ -3,18 +3,27 @@
 #include "argparser.h"
 #include "call.h"
 #include "BM.h"
+#include "threadpool.h"
 char * paat;
 bool nflag_ftw = 0;
+thread_manager::ThreadPool * tp;
+
+#include <string>
+int fBM(int id, std::string path) {/* printf("(%d : %s)\n",id,path.data()); */return BM::BM(path.data());};
+int fBM_N(int id, std::string path) {/* printf("(%d : %s)\n",id,path.data()); */return BM::BM_N(path.data());};
+
 int call::display_info(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
 {
     if (typeflag == FTW_F)
     { 
         //typeflag indicates  normal file
         //printf("normal file %c\n",pat[0]);
-        printf("BM called at %s with pattern %s\n",fpath, paat);
-        if(nflag_ftw) BM::BM_N(fpath);
-        else BM::BM(fpath);
-        //push fpath to threadpool queue 
+       // printf("BM called at %s with pattern %s\n",fpath, paat);
+        // if(nflag_ftw) BM::BM_N(fpath);
+        // else BM::BM(fpath);
+        std::string s = fpath;
+        tp->push( (nflag_ftw ? fBM_N : fBM ) , s);
+        // push fpath to threadpool queue 
     }
     else if (typeflag==FTW_D); //typeflag indicates directory
     return 0;                  // To tell nftw() to continue 
@@ -60,7 +69,11 @@ int call::go(struct parser::output ret)
     // call appropriate function
   }
   // create threadpool here with appropriate 
-  return call(ret);
+  int num_threads = 8;
+  tp = thread_manager::ThreadPool::get_instance(num_threads);  
+  int r = call(ret);
+  delete tp;
+  return r;
 
 }
 

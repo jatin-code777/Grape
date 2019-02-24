@@ -22,20 +22,25 @@ namespace thread_manager {
 	{
 		static ThreadPool * instance;
 		static std::mutex instance_mutex;
-		ThreadPool() = default;
-		ThreadPool(int n) { resize(n); }
+		void init() {
+			isDone = false;
+			isStop = false;
+			nWaiting = 0;
+		}
+		ThreadPool() { init(); }
+		ThreadPool(int n) { init(); resize(n); }
 	public: 
 
 		static ThreadPool * get_instance()
 		{
-			detail::autoRAII_lock lock(instance_mutex);
+			// detail::autoRAII_lock lock(instance_mutex);
 			if(!instance)
 				instance = new ThreadPool;
 			return instance;
 		}
 		static ThreadPool * get_instance(int n)
 		{
-			detail::autoRAII_lock lock(instance_mutex);
+			// detail::autoRAII_lock lock(instance_mutex);
 			if(!instance)
 				instance = new ThreadPool(n);
 			return instance;
@@ -141,12 +146,12 @@ namespace thread_manager {
 		}
 		
 		template <class Func_t, class... Param_t>
-		auto push(Func_t&& func, Param_t&&... params)
+		auto push(Func_t&& func, Param_t&&... params) ->std::future<decltype(func(7, params...))>
 		{
-			using std::placeholders;
-			auto func_pack = std::make_shared< std::packaged_task<decltype(func(7,params...))(int)> > (
-				std::bind(std::forward<Func_t>(func) , _1 , std::forward<Param_t>(params)...);
-			)
+			// using std::placeholders;
+			auto func_pack = std::make_shared< std::packaged_task<decltype(func(7, params...))(int)> > (
+				std::bind(std::forward<Func_t>(func) , std::placeholders::_1 , std::forward<Param_t>(params)...  )
+			);
 			auto f = new std::function<void(int)>(
 						[func_pack](int id) { (*func_pack)(id); }
 					);
@@ -158,21 +163,20 @@ namespace thread_manager {
 		}
 
 
-		template <class Func_t>
-		auto push(Func_t&& func)
-		{
-			using std::placeholders;
-			auto func_pack = std::make_shared< std::packaged_task<decltype(func(7))(int)> > (
-				std::forward<Func_t>(func);
-			)
-			auto f = new std::function<void(int)>(
-						[func_pack](int id) { (*func_pack)(id); }
-					);
-			Q.push(func);
-			detail::autoRAII_lock lock(mutex);
-			cv.notify_one();
-			return func_pack->get_future();
-		}
+		// template <class Func_t>
+		// auto push(Func_t&& func)
+		// {
+		// 	auto func_pack = std::make_shared< std::packaged_task<decltype(func(7))(int)> > (
+		// 		std::forward<Func_t>(func)
+		// 	);
+		// 	auto f = new std::function<void(int)>(
+		// 				[func_pack](int id) { (*func_pack)(id); }
+		// 			);
+		// 	Q.push(func);
+		// 	detail::autoRAII_lock lock(mutex);
+		// 	cv.notify_one();
+		// 	return func_pack->get_future();
+		// }
 	private:
 
 		void set_thread(int i) 
@@ -214,9 +218,9 @@ namespace thread_manager {
 		std::mutex mutex;
 		std::condition_variable cv;
 
-		std::atomic<bool>  isDone = false;
-		std::atomic<bool>  isStop = false;
-		std::atomic<int> nWaiting = 0;
+		std::atomic<bool>  isDone ;//= false;
+		std::atomic<bool>  isStop ;//= false;
+		std::atomic<int> nWaiting ;//= 0;
 
 		detail::Atomic_Queue<std::function<void(int id)> *> Q;
 

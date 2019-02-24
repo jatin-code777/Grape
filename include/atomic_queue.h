@@ -83,7 +83,7 @@ namespace detail {
 		{
 			autoRAII_lock lock(mutex);
 			/// Since we don't want to make an extra copy
-			T ret = std::move(Q.top());
+			T ret = std::move(Q.front());
 			Q.pop();
 			return std::move(ret);
 		}
@@ -97,9 +97,15 @@ namespace detail {
 		{
 			autoRAII_lock lock(mutex);
 			if(Q.empty()) return 0;
-			ret = std::move(Q.top());
+			ret = std::move(Q.front());
 			Q.pop();
 			return 1;
+		}
+
+		T& top()
+		{
+			autoRAII_lock lock(mutex);
+			return Q.front();
 		}
 
 	private:

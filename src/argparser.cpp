@@ -243,13 +243,13 @@ struct parser::output parser::parse(int argc, char **argv)
   ret.G_flag =G_flag;
   ret.n_flag =n_flag;
   ret.return_value = 0;
-  printf("pattern : %s\npath : %s\n",ret.PATTERN,ret.PATH);
+  /*printf("pattern : %s\npath : %s\n",ret.PATTERN,ret.PATH);
   printf("F_flag:%d\n",F_flag);
   printf("r_flag:%d\n",r_flag);
   printf("i_flag:%d\n",i_flag);
   printf("v_flag:%d\n",v_flag);
   printf("G_flag:%d\n",G_flag);
-  printf("n_flag:%d\n",n_flag);
+  printf("n_flag:%d\n",n_flag);*/
   return ret;
   
 }
