@@ -6,6 +6,13 @@
 #include <queue>
 #include <mutex>
 
+
+/**
+ * @brief Namespace for internal detail.
+ * 
+ * Contains implementation of fast autoRAII_lock
+ * and Atomic_Queue
+ */
 namespace detail {
 
 	/**
