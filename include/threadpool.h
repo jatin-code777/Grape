@@ -43,7 +43,21 @@
 		std::thread& get_thread(int i) {
 			return *threads[i];
 		}
-
+        
+		// empty the queue
+        void clear_queue() {
+            while(!Q.empty()) delete Q.pop(); // empty the queue
+        }
+		
+		// pops a functional wrapper to the original function
+        std::function<void(int)> pop() {
+            std::function<void(int id)> * f_ptr = Q.pop();
+            std::unique_ptr<std::function<void(int id)>> func(f_ptr); // at return, delete the function even if an exception occurred
+            std::function<void(int)> f;
+            if (f_ptr) f = *f_ptr;
+            return f;
+        }
+		
 		template <class Func_t, class... Param_t>
 		auto push(Func_t&& func, Param_t&&... params)
 		{
@@ -54,6 +68,7 @@
 			auto f = new std::function<void(int)>(
 						[func_pack](int id) { (*func_pack)(id); }
 					);
+
 			Q.push(f);
 			detail::autoRAII_lock lock(mutex);
 			cv.notify_one();
@@ -78,17 +93,17 @@
 		}
 
 	private:
-        std::mutex mutex;
-        std::condition_variable cv;
+		std::mutex mutex;
+		std::condition_variable cv;
 
-        std::atomic<bool>  isDone = false;
-        std::atomic<bool>  isStop = false;
-        std::atomic<int> nWaiting = 0;
+		std::atomic<bool>  isDone = false;
+		std::atomic<bool>  isStop = false;
+		std::atomic<int> nWaiting = 0;
 
-        detail::Atomic_Queue<std::function<void(int id)> *> Q;
+		detail::Atomic_Queue<std::function<void(int id)> *> Q;
 
 		std::vector <std::unique_ptr<std::thread>> threads;
-        std::vector <std::shared_ptr<std::atomic<bool>>> flags;
+		std::vector <std::shared_ptr<std::atomic<bool>>> flags;
 	};
 
 
