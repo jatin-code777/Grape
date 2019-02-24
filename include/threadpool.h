@@ -33,6 +33,13 @@ namespace thread_manager {
 				instance = new ThreadPool;
 			return instance;
 		}
+		static ThreadPool * get_instance(int n)
+		{
+			detail::autoRAII_lock lock(instance_mutex);
+			if(!instance)
+				instance = new ThreadPool(n);
+			return instance;
+		}
 
 		~ThreadPool() { stop(true); }
 
