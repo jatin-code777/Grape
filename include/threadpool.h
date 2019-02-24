@@ -16,28 +16,31 @@
 #include <atomic>
 #include <mutex>
 
-// namespace internal {
-// 	using std::thread;
-// 	using std::shared_ptr;
-// 	using std::atomic;
-// 	using namespace detail;
-// 	using std::condition_variable;
-// 	using std::function>
-// }
+namespace thread_manager {
 
 	class threadpool
 	{
-		// static threadpool * instance;
-
-	public: 
+		static threadpool * instance;
+		static std::mutex instance_mutex;
 		threadpool() = default;
+		threadpool(int n) { resize(n); }
+	public: 
+
+		static threadpool * get_instance()
+		{
+			detail::autoRAII_lock lock(instance_mutex);
+			if(!instance)
+				instance = new threadpool;
+			return instance;
+		}
+
 		~threadpool() { stop(true); }
 
 		/// No copies or moves allowed for threadpool class
 		threadpool(const threadpool &) 				= delete;
-        threadpool(threadpool &&) 					= delete;
-        threadpool & operator=(const threadpool &) 	= delete;
-        threadpool & operator=(threadpool &&) 		= delete;
+		threadpool(threadpool &&) 					= delete;
+		threadpool & operator=(const threadpool &) 	= delete;
+		threadpool & operator=(threadpool &&) 		= delete;
 
 		size_t size() {
 			return threads.size();
@@ -50,85 +53,85 @@
 		std::thread& get_thread(int i) {
 			return *threads[i];
 		}
-        
+		
 		// empty the queue
-        void clear_queue() {
-            while(!Q.empty()) delete Q.pop(); // empty the queue
-        }
+		void clear_queue() {
+			while(!Q.empty()) delete Q.pop(); // empty the queue
+		}
 
-        // change the number of threads in the pool
-        // should be called from one thread, otherwise be careful to not interleave, also with this->stop()
-        // nThreads must be >= 0
-        void resize(int nThreads) {
-            if (!isStop && !isDone) {
-                size_t oldNThreads = threads.size();
-                if (oldNThreads <= nThreads) {  // if the number of threads is increased
-                    threads.resize(nThreads);
-                    flags.resize(nThreads);
+		// change the number of threads in the pool
+		// should be called from one thread, otherwise be careful to not interleave, also with this->stop()
+		// nThreads must be >= 0
+		void resize(int nThreads) {
+			if (!isStop && !isDone) {
+				size_t oldNThreads = threads.size();
+				if (oldNThreads <= nThreads) {  // if the number of threads is increased
+					threads.resize(nThreads);
+					flags.resize(nThreads);
 
-                    for (int i = oldNThreads; i < nThreads; ++i) {
-                        flags[i] = std::make_shared<std::atomic<bool> >(false);
-                        set_thread(i);
-                    }
-                }
-                else {  // the number of threads is decreased
-                    for (int i = oldNThreads - 1; i >= nThreads; --i) {
-                        *flags[i] = true;  // this thread will finish
-                        threads[i]->detach();
-                    }
+					for (int i = oldNThreads; i < nThreads; ++i) {
+						flags[i] = std::make_shared<std::atomic<bool> >(false);
+						set_thread(i);
+					}
+				}
+				else {  // the number of threads is decreased
+					for (int i = oldNThreads - 1; i >= nThreads; --i) {
+						*flags[i] = true;  // this thread will finish
+						threads[i]->detach();
+					}
 
 					{// Begin scope for lock
-                        // stop the detached threads that were waiting
+						// stop the detached threads that were waiting
 						detail::autoRAII_lock lock(mutex);
 						cv.notify_all();  // stop all waiting threads
 					}// End of scope for lock
 
-                    threads.resize(nThreads);  // safe to delete because the threads are detached
-                    flags.resize(nThreads);  // safe to delete because the threads have copies of shared_ptr of the flags, not originals
-                }
-            }
-        }
+					threads.resize(nThreads);  // safe to delete because the threads are detached
+					flags.resize(nThreads);  // safe to delete because the threads have copies of shared_ptr of the flags, not originals
+				}
+			}
+		}
 
-        // wait for all computing threads to finish and stop all threads
-        // may be called asynchronously to not pause the calling thread while waiting
-        // if isWait == true, all the functions in the queue are run, otherwise the queue is cleared without running the functions
-        void stop(bool isWait = false) {
+		// wait for all computing threads to finish and stop all threads
+		// may be called asynchronously to not pause the calling thread while waiting
+		// if isWait == true, all the functions in the queue are run, otherwise the queue is cleared without running the functions
+		void stop(bool isWait = false) {
 			if(isStop) return;
 
-            if (!isWait) {
-                isStop = true;
+			if (!isWait) {
+				isStop = true;
 				for(auto &flag:flags) *flag = true;	// Command all threads to stop
-                clear_queue();  // empty the queue
-            }
-            else {
-                if (isDone) return;
-                isDone = true;  // give the waiting threads a command to finish
-            }
+				clear_queue();  // empty the queue
+			}
+			else {
+				if (isDone) return;
+				isDone = true;  // give the waiting threads a command to finish
+			}
 
-            {// Begin scope for lock
-                detail::autoRAII_lock lock(mutex);
-                cv.notify_all();  // stop all waiting threads
-            }// End of scope for lock
+			{// Begin scope for lock
+				detail::autoRAII_lock lock(mutex);
+				cv.notify_all();  // stop all waiting threads
+			}// End of scope for lock
 
-            for (auto& thread:threads) {  // wait for the computing threads to finish
-                if (thread->joinable()) thread->join();
-            }
+			for (auto& thread:threads) {  // wait for the computing threads to finish
+				if (thread->joinable()) thread->join();
+			}
 
-            // if there were no threads in the pool but some functors in the queue, the functors are not deleted by the threads
-            // therefore delete them here
-            clear_queue();
-            flags.clear();
-            threads.clear();
-        }
+			// if there were no threads in the pool but some functors in the queue, the functors are not deleted by the threads
+			// therefore delete them here
+			clear_queue();
+			flags.clear();
+			threads.clear();
+		}
 
 		// pops a functional wrapper to the original function
-        std::function<void(int)> pop() {
-            std::function<void(int id)> * f_ptr = Q.pop();
-            std::unique_ptr<std::function<void(int id)>> func(f_ptr); // at return, delete the function even if an exception occurred
-            std::function<void(int)> f;
-            if (f_ptr) f = *f_ptr;
-            return f;
-        }
+		std::function<void(int)> pop() {
+			std::function<void(int id)> * f_ptr = Q.pop();
+			std::unique_ptr<std::function<void(int id)>> func(f_ptr); // at return, delete the function even if an exception occurred
+			std::function<void(int)> f;
+			if (f_ptr) f = *f_ptr;
+			return f;
+		}
 		
 		template <class Func_t, class... Param_t>
 		auto push(Func_t&& func, Param_t&&... params)
@@ -167,38 +170,38 @@
 
 		void set_thread(int i) 
 		{
-            std::shared_ptr<std::atomic<bool>> flag(this->flags[i]); // a copy of the shared ptr to the flag
-            auto func = [this, i, &flag = *flags[i]/* a copy of the shared ptr to the flag */]() {
-                std::function<void(int id)> * f;
-                bool isPop = this->Q.pop(f);
-                while (true) {
-                    while (isPop) {  // if there is anything in the queue
-                        std::unique_ptr<std::function<void(int id)>> func(f); // at return, delete the function even if an exception occurred
-                        (*f)(i);
-                        if (flag)
-                            return;  // the thread is wanted to stop, return even if the queue is not empty yet
-                        else
-                            isPop = this->Q.pop(f);
-                    }
+			std::shared_ptr<std::atomic<bool>> flag(this->flags[i]); // a copy of the shared ptr to the flag
+			auto func = [this, i, &flag = *flags[i]/* a copy of the shared ptr to the flag */]() {
+				std::function<void(int id)> * f;
+				bool isPop = this->Q.pop(f);
+				while (true) {
+					while (isPop) {  // if there is anything in the queue
+						std::unique_ptr<std::function<void(int id)>> func(f); // at return, delete the function even if an exception occurred
+						(*f)(i);
+						if (flag)
+							return;  // the thread is wanted to stop, return even if the queue is not empty yet
+						else
+							isPop = this->Q.pop(f);
+					}
 					// while(!Q.empty()) {
 					// 	(*Q.pop())(i);
 					// 	if(flag) return;
 					// }
-                    // the queue is empty here, wait for the next command
-                    // detail::autoRAII_lock lock(this->mutex);
-                    std::unique_lock<std::mutex> lock(this->mutex);
-                    ++this->nWaiting;
-                    this->cv.wait(lock, [this, &f, &isPop, &flag](){
+					// the queue is empty here, wait for the next command
+					// detail::autoRAII_lock lock(this->mutex);
+					std::unique_lock<std::mutex> lock(this->mutex);
+					++this->nWaiting;
+					this->cv.wait(lock, [this, &f, &isPop, &flag](){
 											isPop = this->Q.pop(f);
 											return isPop || this->isDone || flag ;
 										});
-                    --this->nWaiting;
-                    if (!isPop)
-                        return;  // if the queue is empty and this->isDone == true or *flag then return
-                }
-            };
-            threads[i].reset(new std::thread(func)); // compiler may not support std::make_unique()
-        }
+					--this->nWaiting;
+					if (!isPop)
+						return;  // if the queue is empty and this->isDone == true or *flag then return
+				}
+			};
+			threads[i].reset(new std::thread(func)); // compiler may not support std::make_unique()
+		}
 
 	private:
 		std::mutex mutex;
@@ -215,7 +218,9 @@
 	};
 
 
+	//Initialize pointer to zero so that it can be initialized in first call to getInstance
+	threadpool* threadpool::instance = nullptr;
 
-
+}
 
 #endif
