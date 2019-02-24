@@ -18,29 +18,29 @@
 
 namespace thread_manager {
 
-	class threadpool
+	class ThreadPool
 	{
-		static threadpool * instance;
+		static ThreadPool * instance;
 		static std::mutex instance_mutex;
-		threadpool() = default;
-		threadpool(int n) { resize(n); }
+		ThreadPool() = default;
+		ThreadPool(int n) { resize(n); }
 	public: 
 
-		static threadpool * get_instance()
+		static ThreadPool * get_instance()
 		{
 			detail::autoRAII_lock lock(instance_mutex);
 			if(!instance)
-				instance = new threadpool;
+				instance = new ThreadPool;
 			return instance;
 		}
 
-		~threadpool() { stop(true); }
+		~ThreadPool() { stop(true); }
 
-		/// No copies or moves allowed for threadpool class
-		threadpool(const threadpool &) 				= delete;
-		threadpool(threadpool &&) 					= delete;
-		threadpool & operator=(const threadpool &) 	= delete;
-		threadpool & operator=(threadpool &&) 		= delete;
+		/// No copies or moves allowed for ThreadPool class
+		ThreadPool(const ThreadPool &) 				= delete;
+		ThreadPool(ThreadPool &&) 					= delete;
+		ThreadPool & operator=(const ThreadPool &) 	= delete;
+		ThreadPool & operator=(ThreadPool &&) 		= delete;
 
 		size_t size() {
 			return threads.size();
@@ -219,7 +219,7 @@ namespace thread_manager {
 
 
 	//Initialize pointer to zero so that it can be initialized in first call to getInstance
-	threadpool* threadpool::instance = nullptr;
+	ThreadPool* ThreadPool::instance = nullptr;
 
 }
 
