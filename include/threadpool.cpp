@@ -3,6 +3,6 @@
 
 int main()
 {
-	Atomic_Queue<int> a;
+	detail::Atomic_Queue<int> a;
 	a.push(1);
 }

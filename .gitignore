@@ -32,3 +32,7 @@
 *.exe
 *.out
 *.app
+
+# Others
+include/test.cpp
+.vscode/settings.json
