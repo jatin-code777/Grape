@@ -1,9 +1,10 @@
 language: cpp
+sudo: required
 compiler:
   - gcc
 branches:
   only:
-  - master
+  - travis-testing
 
 matrix:
   include:
