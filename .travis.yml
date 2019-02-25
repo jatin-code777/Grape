@@ -11,7 +11,7 @@ matrix:
       addons:
         apt:
           packages:
-            - cmake
+          - cmake
       env:
         - MATRIX_EVAL="CC=gcc && CXX=g++"
 script:
