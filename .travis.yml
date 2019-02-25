@@ -1,0 +1,20 @@
+language: cpp
+sudo: required
+compiler:
+  - gcc
+branches:
+  only:
+  - travis-testing
+
+matrix:
+  include:
+    - os: linux
+      addons:
+        apt:
+          packages:
+            - cmake
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+script:
+  - mkdir build && cd build && cmake .. && make
