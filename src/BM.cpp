@@ -10,12 +10,13 @@ using namespace std;
 
 
 auto comp = [](char a, char b) { return a==b ;};//general == character comparision
-auto comp_ig = [](char a, char b) { return (a|' ') == (b|' ') ; };//ignore case comparator
+auto comp_ig = [](char a, char b) { return (a|' ') == (b|' '); };//ignore case comparator
 function<bool(char,char)> eq;
 int occ[ALPHABET_SIZE],jt[ALPHABET_SIZE];
 int n,PAGESIZE = getpagesize();
 char* pat;
 bool ignore_case = 0;
+bool ignore_name = 0;
 //n =  pattern length
 //occ[i] = last occurance index of character with ASCII value i in the pattern.
 //occ[i] = -1 --> that characeter doesn't exist in the search pattern 
@@ -67,19 +68,20 @@ void BM::case2_good_suffix(char* pat)
 	}
 }
 
-void BM::pre_process(char* patt, bool ic)
+void BM::pre_process(char* patt, bool ic, bool ig_name)
 {
 	eq = ic?comp_ig:comp;
 	ignore_case = ic;
 	pat = patt;
 	n = strlen(pat);
+	ignore_name = ig_name;
 	s.resize(n+1); f.resize(n+1);
 	build_occ(pat);//handle the bad character heuristic
 	case1_good_suffix(pat);//Compute f. Compute s when the the already matched part has a copy in the pattern
 	case2_good_suffix(pat);//Compute when already matched part only partially exists in the remaining pattern
 }
 
-int BM::BM(const char* path)
+int BM::BM(int id, const char* path)
 {
 	int fd = open(path,O_RDONLY);
 	if(fd == -1) return 1;
@@ -108,7 +110,8 @@ int BM::BM(const char* path)
 
 		if(j==-1)
 		{
-			printf("%s:%d \n",path,i);
+			if(ignore_name==0) printf("%s:",path);
+			printf("%d\n",i);
 			i += s[0];
 		}
 		else
@@ -118,7 +121,8 @@ int BM::BM(const char* path)
 	return 0;
 }
 
-int BM::BM_N(const char* path)
+
+int BM::BM_N(int id, const char* path)
 {
 	int fd = open(path,O_RDONLY);
 	if(fd == -1) return 1;
@@ -153,7 +157,8 @@ int BM::BM_N(const char* path)
 		for(j = n-1; j>=0 && eq(pat[j],buf[ i - k + PAGESIZE + j ]); j--);
 		if(j==-1)
 		{
-			printf("%s:%d:\n",path,line_no);
+			if(ignore_name==0) printf("%s:",path);
+			printf("%d:\n",line_no);
 			i += s[0];
 		}
 		else{
