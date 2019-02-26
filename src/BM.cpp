@@ -25,7 +25,7 @@ bool ignore_name = 0;
 vector<int> s,f;
 //f[i] = starting point of longest suffix of pat[i....n] that is also its prefix
 //f[i] >= pattern length --> such a suffix doesn't exist
-//s[i] = shift to be made based on good suffix heuristics, when index
+//s[i] = shift to be made based on good suffix heuristics, when index i does not match, the rest of the suffix matches
 //s[i] is the MINIMUM shift such that the part that is already matched matches, and the mismatched character gets changed
 
 void BM::build_occ(char* pat)
