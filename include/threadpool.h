@@ -20,11 +20,24 @@ namespace thread_manager {
 
 	class ThreadPool
 	{
-
+		/**
+		 * @brief Construct a new Thread Pool object
+		 * 
+		 * @param n Initial number of threads to be created.
+		 */
 		ThreadPool(int n) { resize(n); }
 
 	public: 
-
+		/**
+		 * @brief Get the single instance object pointer
+		 * 
+		 * @param n Initial number os threads to be created
+		 * @return ThreadPool* The instance pointer
+		 * 
+		 * This is a threadsafe implementation from C++11 onwards
+		 * This also destroys the object in case of exceptions or end of program
+		 * /// https://stackoverflow.com/questions/1661529/is-meyers-implementation-of-the-singleton-pattern-thread-safe
+		 */
 		static ThreadPool* get_instance(int n = 0)
 		{
 			static ThreadPool instance(n);
@@ -132,9 +145,8 @@ namespace thread_manager {
 		}
 		
 		template <class Func_t, class... Param_t>
-		auto push(Func_t&& func, Param_t&&... params) ->std::future<decltype(func(7, params...))>
+		auto push(Func_t&& func, Param_t&&... params)
 		{
-			// using std::placeholders;
 			auto func_pack = std::make_shared< std::packaged_task<decltype(func(7, params...))(int)> > (
 				std::bind(std::forward<Func_t>(func) , std::placeholders::_1 , std::forward<Param_t>(params)...  )
 			);
@@ -203,9 +215,9 @@ namespace thread_manager {
 		std::mutex mutex;
 		std::condition_variable cv;
 
-		std::atomic<bool>  isDone {false} ;//= false;
-		std::atomic<bool>  isStop {false} ;//= false;
-		std::atomic<int> nWaiting {0} ;//= 0;
+		std::atomic<bool>  isDone {false} ;
+		std::atomic<bool>  isStop {false} ;
+		std::atomic<int> nWaiting {0} ;
 
 		detail::Atomic_Queue<std::function<void(int id)> *> Q;
 
