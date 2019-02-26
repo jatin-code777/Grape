@@ -14,7 +14,7 @@ namespace call
 	 *
 	 * @return     on sucess returns 0 to continue file tree walk
 	 */
-	int display_info(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf);
+	int push_to_threadpool(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf);
 
 	/**
 	 * @brief      Determines if file.
@@ -41,7 +41,7 @@ namespace call
 	 *
 	 * @return     sucess value
 	 */
-	int call(struct parser::output ret);
+	int call_file_tree_walk(struct parser::output ret);
 
 	/**
 	 * @brief      processes the parser output
