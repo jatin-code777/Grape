@@ -20,13 +20,8 @@ namespace thread_manager {
 
 	class ThreadPool
 	{
-		void init() {
-			isDone = false;
-			isStop = false;
-			nWaiting = 0;
-		}
 
-		ThreadPool(int n) { init(); resize(n); }
+		ThreadPool(int n) { resize(n); }
 
 	public: 
 
@@ -153,21 +148,20 @@ namespace thread_manager {
 			return func_pack->get_future();
 		}
 
-
-		// template <class Func_t>
-		// auto push(Func_t&& func)
-		// {
-		// 	auto func_pack = std::make_shared< std::packaged_task<decltype(func(7))(int)> > (
-		// 		std::forward<Func_t>(func)
-		// 	);
-		// 	auto f = new std::function<void(int)>(
-		// 				[func_pack](int id) { (*func_pack)(id); }
-		// 			);
-		// 	Q.push(func);
-		// 	detail::autoRAII_lock lock(mutex);
-		// 	cv.notify_one();
-		// 	return func_pack->get_future();
-		// }
+		template <class Func_t>
+		auto push(Func_t&& func)
+		{
+			auto func_pack = std::make_shared< std::packaged_task<decltype(func(7))(int)> > (
+				std::forward<Func_t>(func)
+			);
+			auto f = new std::function<void(int)>(
+						[func_pack](int id) { (*func_pack)(id); }
+					);
+			Q.push(func);
+			detail::autoRAII_lock lock(mutex);
+			cv.notify_one();
+			return func_pack->get_future();
+		}
 	private:
 
 		void set_thread(int i) 
@@ -209,9 +203,9 @@ namespace thread_manager {
 		std::mutex mutex;
 		std::condition_variable cv;
 
-		std::atomic<bool>  isDone ;//= false;
-		std::atomic<bool>  isStop ;//= false;
-		std::atomic<int> nWaiting ;//= 0;
+		std::atomic<bool>  isDone {false} ;//= false;
+		std::atomic<bool>  isStop {false} ;//= false;
+		std::atomic<int> nWaiting {0} ;//= 0;
 
 		detail::Atomic_Queue<std::function<void(int id)> *> Q;
 
