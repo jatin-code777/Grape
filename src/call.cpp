@@ -71,9 +71,7 @@ int call::go(struct parser::output ret)
   // create threadpool here with appropriate 
   int num_threads = 8;
   tp = thread_manager::ThreadPool::get_instance(num_threads);  
-  int r = call(ret);
-  delete tp;
-  return r;
+  return call(ret);
 
 }
 

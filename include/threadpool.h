@@ -20,30 +20,20 @@ namespace thread_manager {
 
 	class ThreadPool
 	{
-		static ThreadPool * instance;
-		static std::mutex instance_mutex;
 		void init() {
 			isDone = false;
 			isStop = false;
 			nWaiting = 0;
 		}
-		ThreadPool() { init(); }
+
 		ThreadPool(int n) { init(); resize(n); }
+
 	public: 
 
-		static ThreadPool * get_instance()
+		static ThreadPool* get_instance(int n = 0)
 		{
-			// detail::autoRAII_lock lock(instance_mutex);
-			if(!instance)
-				instance = new ThreadPool;
-			return instance;
-		}
-		static ThreadPool * get_instance(int n)
-		{
-			// detail::autoRAII_lock lock(instance_mutex);
-			if(!instance)
-				instance = new ThreadPool(n);
-			return instance;
+			static ThreadPool instance(n);
+			return &instance;
 		}
 
 		~ThreadPool() { stop(true); }
@@ -75,6 +65,7 @@ namespace thread_manager {
 		// should be called from one thread, otherwise be careful to not interleave, also with this->stop()
 		// nThreads must be >= 0
 		void resize(int nThreads) {
+			if(nThreads == size())	return;
 			if (!isStop && !isDone) {
 				size_t oldNThreads = threads.size();
 				if (oldNThreads <= nThreads) {  // if the number of threads is increased
@@ -227,10 +218,6 @@ namespace thread_manager {
 		std::vector <std::unique_ptr<std::thread>> threads;
 		std::vector <std::shared_ptr<std::atomic<bool>>> flags;
 	};
-
-
-	//Initialize pointer to zero so that it can be initialized in first call to getInstance
-	ThreadPool* ThreadPool::instance = nullptr;
 
 }
 
