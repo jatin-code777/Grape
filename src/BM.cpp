@@ -4,7 +4,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <functional>
+#include <inttypes.h>
 #include "BM.h"
+#include <deque>
+
 #define ALPHABET_SIZE 256
 using namespace std;
 
@@ -13,11 +16,11 @@ auto comp = [](char a, char b) { return a==b ;};//general == character comparisi
 auto comp_ig = [](char a, char b) { return (a|' ') == (b|' '); };//ignore case comparator
 function<bool(char,char)> eq;
 int occ[ALPHABET_SIZE],jt[ALPHABET_SIZE];
-int n,PAGESIZE = getpagesize();
+int n,PAGESIZE = getpagesize()*32;
 char* pat;
 bool ignore_case = 0;
 bool ignore_name = 0;
-//n =  pattern length
+//n = pattern length
 //occ[i] = last occurance index of character with ASCII value i in the pattern.
 //occ[i] = -1 --> that characeter doesn't exist in the search pattern 
 //jt is jumptable based on bad character heuristic due to mismatch at the last position
@@ -27,6 +30,85 @@ vector<int> s,f;
 //f[i] >= pattern length --> such a suffix doesn't exist
 //s[i] = shift to be made based on good suffix heuristics, when index i does not match, the rest of the suffix matches
 //s[i] is the MINIMUM shift such that the part that is already matched matches, and the mismatched character gets changed
+
+void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
+{
+	deque<char> out;
+	int blockshift=0;
+	int loc = i - 1 - k + PAGESIZE;
+	int64_t left = i-1, right = i + n,k_ = k;
+	while(left != -1)
+	{ 
+		while(loc >= 0)
+			if(buf[loc] == '\n')
+				break;
+			else{
+				out.push_front(buf[loc]);
+				loc--;
+			}
+
+		if(loc == -1)
+		{
+			blockshift--;
+			k -= PAGESIZE;
+			left = k - 1;
+			loc += PAGESIZE;
+			if(k) pread(fd,buf,PAGESIZE,k-PAGESIZE);
+		}
+		else
+		{
+			left = k - PAGESIZE + loc;
+			break;
+		}
+	}
+	left += 1;
+
+	// if(blockshift<0){
+		while(!out.empty()){
+			printf("%c",out.front());
+			out.pop_front();
+		}
+	/*} //handle 
+	else
+		for(loc = left - k + PAGESIZE; loc < i - k + PAGESIZE; loc++)
+			printf("%c",buf[loc]);
+	//just iterate over block // print from left till pattern point
+	*/
+	printf("%s",pat);//print the pattern	/*TODO : in red*/
+	
+	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; 
+	while(right < m)
+	{
+		while(right + loc < min(m,k))//add here to stop going ahead of end
+		{
+			if(buf[loc]=='\n') break;
+			else{
+				printf("%c",buf[loc]);
+				loc ++;
+			}
+		}
+
+		if(loc == PAGESIZE)
+		{
+			k += PAGESIZE;
+			right = k - PAGESIZE;
+			loc = 0;
+			if(k<m){
+				lseek(fd,k,SEEK_SET);
+				read(fd,buf,PAGESIZE);
+				// pread(fd,buf,PAGESIZE,right);
+			}
+		}
+		else
+		{
+			right = k - PAGESIZE + loc;
+			break;
+		}
+	}
+	right = min(right,m);
+	printf("\n");
+	i = right+1;
+}
 
 void BM::build_occ(char* pat)
 {
@@ -83,9 +165,9 @@ void BM::pre_process(char* patt, bool ic, bool ig_name)
 
 int BM::BM(int id, const char* path)
 {
-	int fd = open(path,O_RDONLY);
+	int fd = open(path,O_RDONLY),jump,j;
 	if(fd == -1) return 1;
-	int i=0,j,jump,k=0,m = lseek(fd,0,SEEK_END);//i = start
+	int64_t i=0,k=0,m = lseek(fd,0,SEEK_END);//i = start
 	lseek(fd,0,SEEK_SET);
 	k += PAGESIZE;
 	char buf[PAGESIZE];
@@ -111,8 +193,8 @@ int BM::BM(int id, const char* path)
 		if(j==-1)
 		{
 			if(ignore_name==0) printf("%s:",path);
-			printf("%d\n",i);
-			i += s[0];
+			printf("%" PRId64 ": ",i);
+			print_line(fd,i,k,m,buf);
 		}
 		else
 			i += max(s[j+1],j - occ[(int)buf[i - k + PAGESIZE + j]]);
@@ -124,9 +206,9 @@ int BM::BM(int id, const char* path)
 
 int BM::BM_N(int id, const char* path)
 {
-	int fd = open(path,O_RDONLY);
+	int fd = open(path,O_RDONLY),jump,j;
 	if(fd == -1) return 1;
-	int i=0,j,jump,k=0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
+	int64_t i=0,k=0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
 	lseek(fd,0,SEEK_SET);
 	k += PAGESIZE;
 	char buf[PAGESIZE];
@@ -154,14 +236,18 @@ int BM::BM_N(int id, const char* path)
 			k = i + PAGESIZE;
 			continue;
 		}
+
 		for(j = n-1; j>=0 && eq(pat[j],buf[ i - k + PAGESIZE + j ]); j--);
+
 		if(j==-1)
 		{
 			if(ignore_name==0) printf("%s:",path);
-			printf("%d:\n",line_no);
-			i += s[0];
+			printf("%" PRId64 ":",line_no);
+			print_line(fd,i,k,m,buf);	
+			line_no++;
 		}
-		else{
+		else
+		{
 			jump = max(s[j+1],j - occ[(int)buf[ i - k + PAGESIZE + j ]]);
 			for(ch = 0; ch<jump; ch++)	if(buf[ i - k + PAGESIZE + ch ]=='\n') line_no++;
 			i += jump;
@@ -170,13 +256,3 @@ int BM::BM_N(int id, const char* path)
 	close(fd);
 	return 0;
 }
-
-// int main()
-// {
-// 	char pat[20],path[50];
-// 	bool inv;
-// 	scanf("%s %s",pat,path);
-// 	cin>>inv;
-// 	BM::pre_process(pat,inv);
-// 	BM::BM_N(path);
-// }

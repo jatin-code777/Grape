@@ -2,6 +2,9 @@
 #define BM_H
 
 namespace BM {
+
+void print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf);
+
 /**
  * @brief      Builds occ array, used to track last occurance of each character in the input pattern.
  *
