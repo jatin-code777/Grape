@@ -1,6 +1,6 @@
 #ifndef BM_H
 #define BM_H
-
+#include <sstream>
 namespace BM {
 
 /**
@@ -8,20 +8,9 @@ namespace BM {
  */
 void build_lps();
 
+void match(std::stringstream &ss);
 
-void match();
-
-
-/**
- * @brief      prints line on match detection
- *
- * @param[in]  fd    file descriptor
- * @param      i     position where match is detected
- * @param      k     buffer end position
- * @param[in]  m     file end position
- * @param      buf   The buffer
- */
-void print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf);
+void print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, std::stringstream& ss);
 
 /**
  * @brief      Builds occ array, used to track last occurance of each character in the input pattern.

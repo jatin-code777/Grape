@@ -72,7 +72,7 @@ struct parser::output parser::parse(int argc, char **argv)
 {
   static int help_flag=0, usage_flag=0,version_flag=0;
   int c;
-  bool F_flag=0,r_flag=0,i_flag=0,v_flag=0,G_flag=0,n_flag=0;
+  bool F_flag=0,r_flag=0,i_flag=0,v_flag=0,G_flag=0,n_flag=0,c_flag=0;
   char *path = initialpath;
   char *PATTERN = NULL;
   int p = 0;
@@ -92,6 +92,7 @@ struct parser::output parser::parse(int argc, char **argv)
     {"invert-match",  no_argument,       0, 'v'},
     {"basic-regex",   optional_argument, 0, 'G'},
     {"line-number",   no_argument,       0, 'n'},
+    {"count",   no_argument,             0, 'c'},
     {0, 0, 0, 0}
   };
   int option_index = 0;
@@ -146,6 +147,9 @@ struct parser::output parser::parse(int argc, char **argv)
           break;
         case 'r':
           r_flag=1;
+          break;
+        case 'c':
+          c_flag=1;
           break;
         case 'i':
           i_flag=1;
@@ -242,6 +246,7 @@ struct parser::output parser::parse(int argc, char **argv)
   ret.v_flag =v_flag;
   ret.G_flag =G_flag;
   ret.n_flag =n_flag;
+  ret.c_flag =c_flag;
   ret.return_value = 0;
   /*printf("pattern : %s\npath : %s\n",ret.PATTERN,ret.PATH);
   printf("F_flag:%d\n",F_flag);
