@@ -25,17 +25,23 @@ bool ignore_name = 0;
 //occ[i] = -1 --> that characeter doesn't exist in the search pattern 
 //jt is jumptable based on bad character heuristic due to mismatch at the last position
 
+vector<int> lps;
 vector<int> s,f;
 //f[i] = starting point of longest suffix of pat[i....n] that is also its prefix
 //f[i] >= pattern length --> such a suffix doesn't exist
 //s[i] = shift to be made based on good suffix heuristics, when index i does not match, the rest of the suffix matches
 //s[i] is the MINIMUM shift such that the part that is already matched matches, and the mismatched character gets changed
 
+void BM::match()
+{
+	printf(" ---- Match ---- ");
+}
+
 void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 {
 	deque<char> out;
 	int blockshift=0;
-	int loc = i - 1 - k + PAGESIZE;
+	int loc = i - 1 - k + PAGESIZE,l=0;
 	int64_t left = i-1, right = i + n,k_ = k;
 	while(left != -1)
 	{ 
@@ -75,16 +81,23 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 	//just iterate over block // print from left till pattern point
 	*/
 	printf("%s",pat);//print the pattern	/*TODO : in red*/
-	
-	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; 
+	match();
+
+	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l=0; 
 	while(right < m)
 	{
 		while(right + loc < min(m,k))//add here to stop going ahead of end
 		{
 			if(buf[loc]=='\n') break;
 			else{
+				while(l!=-1 && buf[loc]!=pat[l]) l = l ? lps[l-1] : -1;
+				l++;
 				printf("%c",buf[loc]);
 				loc ++;
+				if(l==n){
+					match();
+					l=0;
+				}
 			}
 		}
 
@@ -110,7 +123,7 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 	i = right+1;
 }
 
-void BM::build_occ(char* pat)
+void BM::build_occ()
 {
 	n = strlen(pat);
 	memset(occ,-1,sizeof(occ));
@@ -125,7 +138,7 @@ void BM::build_occ(char* pat)
 		jt[i] = n - 1 - occ[i];
 }
 
-void BM::case1_good_suffix(char* pat)
+void BM::case1_good_suffix()
 {
 	int i = n + 1, j = n + 2;
 	while(i>0)
@@ -140,13 +153,23 @@ void BM::case1_good_suffix(char* pat)
 	}
 }
 
-void BM::case2_good_suffix(char* pat)
+void BM::case2_good_suffix()
 {
 	int i=0,j=f[0];
 	for(;i<=n;i++)
 	{
 		if(s[i]==0) s[i] = j;
 		if(i==j) j = f[j];
+	}
+}
+
+void BM::build_lps()
+{
+	int i = 1 , l = lps[0] = 0;
+	while(i<n)
+	{
+		if(pat[i] == pat[l]) lps[i++] = ++l;
+		else l ? l = lps[l-1] : lps[i++] = 0;
 	}
 }
 
@@ -157,10 +180,11 @@ void BM::pre_process(char* patt, bool ic, bool ig_name)
 	pat = patt;
 	n = strlen(pat);
 	ignore_name = ig_name;
-	s.resize(n+1); f.resize(n+1);
-	build_occ(pat);//handle the bad character heuristic
-	case1_good_suffix(pat);//Compute f. Compute s when the the already matched part has a copy in the pattern
-	case2_good_suffix(pat);//Compute when already matched part only partially exists in the remaining pattern
+	s.resize(n+1); f.resize(n+1); lps.resize(n);
+	build_occ();//handle the bad character heuristic
+	case1_good_suffix();//Compute f. Compute s when the the already matched part has a copy in the pattern
+	case2_good_suffix();//Compute when already matched part only partially exists in the remaining pattern
+	build_lps();//compute the longest prefix suffix for prefix substrings of input pattern
 }
 
 int BM::BM(int id, const char* path)
@@ -180,7 +204,8 @@ int BM::BM(int id, const char* path)
 			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
 			if(!jump) break;
 		}
-		if(i+n > min(m,k))
+		
+		if(i + n > min(m,k))
 		{
 			lseek(fd,i,SEEK_SET);
 			read(fd,buf,PAGESIZE);
@@ -189,11 +214,11 @@ int BM::BM(int id, const char* path)
 		}
 
 		for(j = n-1; j>=0 && eq(pat[j],buf[i - k + PAGESIZE + j]); j--);
-
+		
 		if(j==-1)
 		{
 			if(ignore_name==0) printf("%s:",path);
-			printf("%" PRId64 ": ",i);
+			// printf("%" PRId64 ": ",i);
 			print_line(fd,i,k,m,buf);
 		}
 		else

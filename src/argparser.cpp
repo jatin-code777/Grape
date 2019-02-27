@@ -2,7 +2,7 @@
 #include <iostream>
 #include "argparser.h"
 
-/// Flags set by ‘--help’,'--usage', '--version' 
+/// Flags set by '--help','--usage', '--version' 
 
 /**
  * @brief      prints help for our program
@@ -84,7 +84,7 @@ struct parser::output parser::parse(int argc, char **argv)
     {"usage",   no_argument,  &usage_flag,  1},
     {"help",    no_argument,  &help_flag,   1},
     {"version", no_argument,  &version_flag,1},
-    /// These options don’t set a flag.We distinguish them by their indices.
+    /// These options don't set a flag.We distinguish them by their indices.
     {"regexp",        optional_argument, 0, 'F'},
     {"fixed-string",  optional_argument, 0, 'F'},
     {"recursive",     no_argument,       0, 'r'},
@@ -184,7 +184,7 @@ struct parser::output parser::parse(int argc, char **argv)
         }
     }
 
-  /* Instead of reporting '--help’ as they are encountered,
+  /* Instead of reporting '--help' as they are encountered,
    we report the final status resulting from them. */
   if (help_flag){
     print_help();
