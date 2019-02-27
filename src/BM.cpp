@@ -38,12 +38,13 @@ vector<int> s,f;
 
 void BM::match(std::stringstream &ss)
 {
-	ss<<"(***Match***)";//printf(" ---- Match ---- ");
+	//ss<<"(***Match***)";//printf(" ---- Match ---- ");
 }
 
 void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstream &ss)
 {
 	deque<char> out;
+	deque<char> lin;
 	int blockshift=0;
 	int loc = i - 1 - k + PAGESIZE,l=0;
 	int64_t left = i-1, right = i + n,k_ = k;
@@ -84,9 +85,9 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 			printf("%c",buf[loc]);
 	//just iterate over block // print from left till pattern point
 	*/
-	ss<<pat;//printf("%s",pat);//print the pattern	/*TODO : in red*/
+	ss<<"\033[1;31m"<<pat<<"\033[0m";//printf("%s",pat);//print the pattern	/*TODO : in red*/
 	match(ss);
-
+	int red = 0;
 	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l=0; 
 	while(right < m)
 	{
@@ -96,12 +97,16 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 			else{
 				while(l!=-1 && buf[loc]!=pat[l]) l = l ? lps[l-1] : -1;
 				l++;
-				ss<<buf[loc];//printf("%c",buf[loc]);
-				loc ++;
 				if(l==n){
-					match(ss);
-					l=0;
+					red = n;//match(ss);
+					l = 0;
 				}
+				lin.push_back(buf[loc]);
+				if(lin.size() == n){
+				if(red > 0) {ss<<"\033[1;31m"<<lin.front()<<"\033[0m";red--;}//printf("%c",buf[loc]);
+				else ss<<lin.front(); lin.pop_front();}
+				loc ++;
+				
 			}
 		}
 
@@ -123,6 +128,9 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 		}
 	}
 	right = min(right,m);
+	while(lin.size() > 0){
+	if(red > 0) {ss<<"\033[1;31m"<<lin.front()<<"\033[0m";red--;}//printf("%c",buf[loc]);
+	else ss<<lin.front(); lin.pop_front();}
 	ss<<"\n";//printf("\n");
 	i = right+1;
 }
