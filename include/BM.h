@@ -3,10 +3,24 @@
 
 namespace BM {
 
+/**
+ * @brief      Builds Longest Prefix Suffix array for the input pattern sequence
+ */
 void build_lps();
+
 
 void match();
 
+
+/**
+ * @brief      prints line on match detection
+ *
+ * @param[in]  fd    file descriptor
+ * @param      i     position where match is detected
+ * @param      k     buffer end position
+ * @param[in]  m     file end position
+ * @param      buf   The buffer
+ */
 void print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf);
 
 /**
@@ -66,8 +80,6 @@ int BM(int id, const char* path);
  *
  * @return     status signal
  */
-
-
 int BM_N(int id ,const char* path);
 
 }
