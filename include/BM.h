@@ -1,13 +1,13 @@
 #ifndef BM_H
 #define BM_H
-
+#include <sstream>
 namespace BM {
 
 void build_lps();
 
-void match();
+void match(std::stringstream &ss);
 
-void print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf);
+void print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, std::stringstream& ss);
 
 /**
  * @brief      Builds occ array, used to track last occurance of each character in the input pattern.

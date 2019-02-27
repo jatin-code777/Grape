@@ -7,6 +7,9 @@
 #include <inttypes.h>
 #include "BM.h"
 #include <deque>
+#include <sstream>
+#include <mutex>
+
 
 #define ALPHABET_SIZE 256
 using namespace std;
@@ -20,6 +23,7 @@ int n,PAGESIZE = getpagesize()*32;
 char* pat;
 bool ignore_case = 0;
 bool ignore_name = 0;
+std::mutex print_mutex;
 //n = pattern length
 //occ[i] = last occurance index of character with ASCII value i in the pattern.
 //occ[i] = -1 --> that characeter doesn't exist in the search pattern 
@@ -32,12 +36,12 @@ vector<int> s,f;
 //s[i] = shift to be made based on good suffix heuristics, when index i does not match, the rest of the suffix matches
 //s[i] is the MINIMUM shift such that the part that is already matched matches, and the mismatched character gets changed
 
-void BM::match()
+void BM::match(std::stringstream &ss)
 {
-	printf(" ---- Match ---- ");
+	ss<<"(***Match***)";//printf(" ---- Match ---- ");
 }
 
-void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
+void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstream &ss)
 {
 	deque<char> out;
 	int blockshift=0;
@@ -71,7 +75,7 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 
 	// if(blockshift<0){
 		while(!out.empty()){
-			printf("%c",out.front());
+			ss<<out.front();//printf("%c",out.front());
 			out.pop_front();
 		}
 	/*} //handle 
@@ -80,8 +84,8 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 			printf("%c",buf[loc]);
 	//just iterate over block // print from left till pattern point
 	*/
-	printf("%s",pat);//print the pattern	/*TODO : in red*/
-	match();
+	ss<<pat;//printf("%s",pat);//print the pattern	/*TODO : in red*/
+	match(ss);
 
 	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l=0; 
 	while(right < m)
@@ -92,10 +96,10 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 			else{
 				while(l!=-1 && buf[loc]!=pat[l]) l = l ? lps[l-1] : -1;
 				l++;
-				printf("%c",buf[loc]);
+				ss<<buf[loc];//printf("%c",buf[loc]);
 				loc ++;
 				if(l==n){
-					match();
+					match(ss);
 					l=0;
 				}
 			}
@@ -119,7 +123,7 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 		}
 	}
 	right = min(right,m);
-	printf("\n");
+	ss<<"\n";//printf("\n");
 	i = right+1;
 }
 
@@ -189,6 +193,7 @@ void BM::pre_process(char* patt, bool ic, bool ig_name)
 
 int BM::BM(int id, const char* path)
 {
+	stringstream ss;
 	int fd = open(path,O_RDONLY),jump,j;
 	if(fd == -1) return 1;
 	int64_t i=0,k=0,m = lseek(fd,0,SEEK_END);//i = start
@@ -217,13 +222,16 @@ int BM::BM(int id, const char* path)
 		
 		if(j==-1)
 		{
-			if(ignore_name==0) printf("%s:",path);
+			if(ignore_name==0) ss<<path;//printf("%s:",path);
 			// printf("%" PRId64 ": ",i);
-			print_line(fd,i,k,m,buf);
+			print_line(fd,i,k,m,buf,ss);
 		}
 		else
 			i += max(s[j+1],j - occ[(int)buf[i - k + PAGESIZE + j]]);
 	}
+	print_mutex.lock();
+	cout<<ss.str();
+	print_mutex.unlock();
 	close(fd);
 	return 0;
 }
@@ -231,6 +239,7 @@ int BM::BM(int id, const char* path)
 
 int BM::BM_N(int id, const char* path)
 {
+	stringstream ss;
 	int fd = open(path,O_RDONLY),jump,j;
 	if(fd == -1) return 1;
 	int64_t i=0,k=0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
@@ -266,9 +275,9 @@ int BM::BM_N(int id, const char* path)
 
 		if(j==-1)
 		{
-			if(ignore_name==0) printf("%s:",path);
-			printf("%" PRId64 ":",line_no);
-			print_line(fd,i,k,m,buf);	
+			if(ignore_name==0) ss<<path;//printf("%s:",path);
+			ss<<line_no<<":";//printf("%" PRId64 ":",line_no);
+			print_line(fd,i,k,m,buf,ss);	
 			line_no++;
 		}
 		else
@@ -278,6 +287,9 @@ int BM::BM_N(int id, const char* path)
 			i += jump;
 		}
 	}
+	print_mutex.lock();
+	std::cout<<ss.str();
+	print_mutex.unlock();
 	close(fd);
 	return 0;
 }
