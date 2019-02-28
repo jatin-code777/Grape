@@ -7,7 +7,7 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 	deque<char> lin;
 	int blockshift = 0;
 	int loc = i - 1 - k + PAGESIZE,l = 0;
-	int64_t left = i-1, right = i + n,k_ = k;
+	int64_t left = i - 1, right = i + n, k_ = k;
 	while(left != -1)
 	{ 
 		while(loc >= 0){
@@ -24,6 +24,7 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 			left = k - 1;
 			loc += PAGESIZE;
 			if(k) pread(fd,buf,PAGESIZE,k-PAGESIZE);
+				
 		}
 		else
 		{
@@ -39,7 +40,7 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 	}
 
 	//blockshift<0 check----
-	if(blockshift<0)
+	if(blockshift < 0)
 		pread(fd,buf,PAGESIZE,k_-PAGESIZE);
 	
 	if(tty) ss<<COLOR_RED_BOLD<<pat<<COLOR_RESET;
