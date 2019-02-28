@@ -9,6 +9,8 @@
 #include <deque>
 #include <sstream>
 #include <mutex>
+#include <unistd.h>
+
 
 #define ALPHABET_SIZE 256
 using namespace std;
@@ -81,7 +83,8 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 			printf("%c",buf[loc]);
 	//just iterate over block // print from left till pattern point
 	*/
-	ss<<"\033[1;31m"<<pat<<"\033[0m";//printf("%s",pat);//print the pattern	/*TODO : in red*/
+	if(isatty(STDOUT_FILENO)==1)ss<<"\033[1;31m"<<pat<<"\033[0m";
+	else ss<<pat;//printf("%s",pat);//print the pattern	/*TODO : in red*/
 	int red = 0;
 	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l=0; 
 	while(right < m)
@@ -98,7 +101,8 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 				}
 				lin.push_back(buf[loc]);
 				if(lin.size() == n){
-				if(red > 0) {ss<<"\033[1;31m"<<lin.front()<<"\033[0m";red--;}//printf("%c",buf[loc]);
+				if(red > 0) {if(isatty(STDOUT_FILENO)==1)ss<<"\033[1;31m"<<lin.front()<<"\033[0m";
+	else ss<<lin.front();red--;}//printf("%c",buf[loc]);
 				else ss<<lin.front(); lin.pop_front();}
 				loc ++;
 				
@@ -124,7 +128,8 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 	}
 	right = min(right,m);
 	while(lin.size() > 0){
-	if(red > 0) {ss<<"\033[1;31m"<<lin.front()<<"\033[0m";red--;}//printf("%c",buf[loc]);
+	if(red > 0) {if(isatty(STDOUT_FILENO)==1)ss<<"\033[1;31m"<<lin.front()<<"\033[0m";
+	else ss<<lin.front();red--;}//printf("%c",buf[loc]);
 	else ss<<lin.front(); lin.pop_front();}
 	ss<<"\n";//printf("\n");
 	i = right+1;
