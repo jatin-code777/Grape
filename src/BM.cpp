@@ -200,6 +200,7 @@ void BM::build_lps()
 	}
 }
 
+
 void BM::pre_process(char* patt, bool ic, bool ig_name, int flags)
 {
 	state = flags;
