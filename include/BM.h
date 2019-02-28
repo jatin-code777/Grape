@@ -3,11 +3,35 @@
 #include <sstream>
 namespace BM {
 
+/**
+ * @brief      skips to next line
+ *
+ * @param[in]  fd    file descriptor
+ * @param      i     position where match is detected
+ * @param      k     buffer end position
+ * @param[in]  m     file end position
+ * @param      buf   The buffer
+ */
+void skip_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf);
+
+
+/**
+ * @brief      Builds Longest Prefix Suffix array for the input pattern sequence
+ */
 void build_lps();
 
-void match(std::stringstream &ss);
-
+/**
+ * @brief      prints line on match detection
+ *
+ * @param[in]  fd    file descriptor
+ * @param      i     position where match is detected
+ * @param      k     buffer end position
+ * @param[in]  m     file end position
+ * @param      buf   The buffer
+ * @param      ss    output string stream for file
+ */
 void print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, std::stringstream& ss);
+
 
 /**
  * @brief      Builds occ array, used to track last occurance of each character in the input pattern.
@@ -44,7 +68,7 @@ void case2_good_suffix();
  * @param[in]  ic       tells whether or not casing is to be ignored
  * @param[in]  ig_name  tells whether or not to print the file names on match detection
  */
-void pre_process(char* patt, bool ic = 0, bool ig_name=0);
+void pre_process(char* patt, bool ic = 0, bool ig_name=0,int flags=0);
 
 
 /**
@@ -66,8 +90,6 @@ int BM(int id, const char* path);
  *
  * @return     status signal
  */
-
-
 int BM_N(int id ,const char* path);
 
 }

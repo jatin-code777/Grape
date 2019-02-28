@@ -10,7 +10,6 @@
 #include <sstream>
 #include <mutex>
 
-
 #define ALPHABET_SIZE 256
 using namespace std;
 
@@ -23,6 +22,7 @@ int n,PAGESIZE = getpagesize()*32;
 char* pat;
 bool ignore_case = 0;
 bool ignore_name = 0;
+int state=0;
 std::mutex print_mutex;
 //n = pattern length
 //occ[i] = last occurance index of character with ASCII value i in the pattern.
@@ -36,10 +36,6 @@ vector<int> s,f;
 //s[i] = shift to be made based on good suffix heuristics, when index i does not match, the rest of the suffix matches
 //s[i] is the MINIMUM shift such that the part that is already matched matches, and the mismatched character gets changed
 
-void BM::match(std::stringstream &ss)
-{
-	//ss<<"(***Match***)";//printf(" ---- Match ---- ");
-}
 
 void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstream &ss)
 {
@@ -86,7 +82,6 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 	//just iterate over block // print from left till pattern point
 	*/
 	ss<<"\033[1;31m"<<pat<<"\033[0m";//printf("%s",pat);//print the pattern	/*TODO : in red*/
-	match(ss);
 	int red = 0;
 	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l=0; 
 	while(right < m)
@@ -185,8 +180,9 @@ void BM::build_lps()
 	}
 }
 
-void BM::pre_process(char* patt, bool ic, bool ig_name)
+void BM::pre_process(char* patt, bool ic, bool ig_name, int flags)
 {
+	state = flags;
 	eq = ic?comp_ig:comp;
 	ignore_case = ic;
 	pat = patt;
@@ -199,17 +195,51 @@ void BM::pre_process(char* patt, bool ic, bool ig_name)
 	build_lps();//compute the longest prefix suffix for prefix substrings of input pattern
 }
 
-int BM::BM(int id, const char* path)
+
+void BM::skip_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
+{
+	int64_t& right = i;
+	int loc = right + n - k + PAGESIZE; right = k - PAGESIZE;
+	while(right < m)
+	{
+		while(right + loc < min(m,k))
+		{
+			if(buf[loc]=='\n') break;
+			loc++;
+		}
+
+		if(loc == PAGESIZE)
+		{
+			k += PAGESIZE;
+			right = k - PAGESIZE;
+			loc = 0;
+			if(k<m){
+				lseek(fd,k,SEEK_SET);
+				read(fd,buf,PAGESIZE);
+			}
+		}
+		else
+		{
+			right = k - PAGESIZE + loc;
+			break;
+		}
+	}
+	right = min(right,m);
+	right++;
+}
+
+int BM::BM(int id, const char* path)//standard(0) and count(3) states are here
 {
 	stringstream ss;
-	int fd = open(path,O_RDONLY),jump,j;
+	bool done = 0;
+	int fd = open(path,O_RDONLY),jump,j,line_count = 0;
 	if(fd == -1) return 1;
 	int64_t i=0,k=0,m = lseek(fd,0,SEEK_END);//i = start
 	lseek(fd,0,SEEK_SET);
 	k += PAGESIZE;
 	char buf[PAGESIZE];
 	read(fd,buf,PAGESIZE);
-	while(i+n <= m)
+	while(!done && i+n <= m)
 	{
 		while(i + 3*n < min(m,k)){//loop unrolled for speed
 			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
@@ -230,15 +260,55 @@ int BM::BM(int id, const char* path)
 		
 		if(j==-1)
 		{
-			if(ignore_name==0) ss<<path;//printf("%s:",path);
-			// printf("%" PRId64 ": ",i);
-			print_line(fd,i,k,m,buf,ss);
+			switch(state)
+			{
+				case 0:
+					if(ignore_name==0) ss<<path;//printf("%s:",path);
+						// printf("%" PRId64 ": ",i);
+						print_line(fd,i,k,m,buf,ss);
+					break;
+				
+				case 1:
+					ss<<path<<"\n";
+					done = 1;
+					break;
+
+				case 2:
+					done = 1;
+					break;
+
+				case 3:	
+					line_count++;
+					skip_line(fd,i,k,m,buf);
+					break;
+
+				default:
+					ss<<"Invalid flag status\n";
+					done = 1;
+					break;
+			}			
 		}
 		else
 			i += max(s[j+1],j - occ[(int)buf[i - k + PAGESIZE + j]]);
 	}
+
+	switch(state)
+	{
+		case 0:
+		case 1:
+			break;
+		case 2:
+			if(!done) ss<<path<<"\n";
+			break;
+		case 3:
+			if(ignore_name) ss<<line_count<<"\n";
+			else ss<<path<<":"<<line_count<<"\n";
+			break;
+		default:
+			ss<<"Invalid flag status\n";
+	}
 	print_mutex.lock();
-	cout<<ss.str();
+	printf("%s",ss.str().data());
 	print_mutex.unlock();
 	close(fd);
 	return 0;
@@ -296,7 +366,7 @@ int BM::BM_N(int id, const char* path)
 		}
 	}
 	print_mutex.lock();
-	std::cout<<ss.str();
+	printf("%s",ss.str().data());
 	print_mutex.unlock();
 	close(fd);
 	return 0;
