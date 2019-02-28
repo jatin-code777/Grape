@@ -86,7 +86,7 @@ struct parser::output parser::parse(int argc, char **argv)
     {"help",    no_argument,  &help_flag,   1},
     {"version", no_argument,  &version_flag,1},
     /// These options don't set a flag.We distinguish them by their indices.
-    {"regexp",        optional_argument, 0, 'F'},
+    {"regexp",        optional_argument, 0, 'e'},
     {"fixed-string",  optional_argument, 0, 'F'},
     {"recursive",     no_argument,       0, 'r'},
     {"ignore-case",   no_argument,       0, 'i'},
@@ -135,13 +135,13 @@ struct parser::output parser::parse(int argc, char **argv)
           }
           break;
         case 'e':
-          if (G_flag){
+          if (F_flag){
             printf("only one type of PATTERN is allowed\n");
             ret.return_value = 1; 
             return ret;
           }
           else{
-            F_flag = 1;
+            G_flag = 1;
             if(optarg!=NULL){
                 PATTERN = optarg;
                 p = 1;
@@ -152,11 +152,9 @@ struct parser::output parser::parse(int argc, char **argv)
           r_flag=1;
           break;
         case 'l':
-          //lL_flag=1;
           l = 0;
           break;
         case 'L':
-          //lL_flag=1;
           l = 1;
           break;
         case 'c':
