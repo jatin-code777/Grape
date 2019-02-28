@@ -1,6 +1,15 @@
 #include "BM.h"
 using namespace std;
 
+void BoyerMooreSearch::error_handler(int status,string message="")
+{
+	if(status == -1)
+	{
+		sprintf(stderr,"Couldn't read file\n");
+		throw 1;
+	}
+}
+
 void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstream &ss)
 {
 	deque<char> out;
@@ -11,7 +20,7 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 	while(left != -1)
 	{ 
 		while(loc >= 0){
-			if(buf[loc] == '\n')
+			if(buf[loc] == 	'\n')
 				break;
 			else
 				out.push_front(buf[loc--]);
@@ -23,8 +32,8 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 			k -= PAGESIZE;
 			left = k - 1;
 			loc += PAGESIZE;
-			if(k) pread(fd,buf,PAGESIZE,k-PAGESIZE);
-				
+			if(k)
+				error_handler(pread(fd,buf,PAGESIZE,k-PAGESIZE),"File Read Error");
 		}
 		else
 		{
@@ -41,7 +50,8 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 
 	//blockshift<0 check----
 	if(blockshift < 0)
-		pread(fd,buf,PAGESIZE,k_-PAGESIZE);
+		error_handler(pread(fd,buf,PAGESIZE,k-PAGESIZE),"File Read Error");
+	
 	
 	if(tty) ss<<COLOR_RED_BOLD<<pat<<COLOR_RESET;
 	else ss<<pat; //printf("%s",pat);//print the pattern /*TODO : in red*/
@@ -54,7 +64,7 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 		{
 			if(buf[loc] == '\n') break;
 			else{
-				while(l!=-1 && buf[loc]!=pat[l]) l = l ? lps[l-1] : -1;
+				while(l!=-1 && buf[loc] != pat[l]) l = l ? lps[l-1] : -1;
 				l++;
 				if(l==n){
 					red = n;
@@ -65,7 +75,7 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 				{
 					if(red > 0)
 					{
-						if(tty)ss<<COLOR_RED_BOLD<<lin.front()<<COLOR_RESET;
+						if(tty) ss<<COLOR_RED_BOLD<<lin.front()<<COLOR_RESET;
 						else ss<<lin.front();
 						red--;
 					}
@@ -79,8 +89,8 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 		if(loc == PAGESIZE)
 		{
 			if(k<m){
-				lseek(fd,k,SEEK_SET);
-				read(fd,buf,PAGESIZE);
+				error_handler(lseek(fd,k,SEEK_SET),"File Read error");
+				error_handler(read(fd,buf,PAGESIZE),"File Read error");
 			}
 			k += PAGESIZE;
 			right = k - PAGESIZE;
@@ -100,11 +110,11 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 			if(tty) ss<<COLOR_RED_BOLD<<lin.front()<<COLOR_RESET;
 			else ss<<lin.front();
 			red--;
-		}//printf("%c",buf[loc]);
+		}
 		else ss<<lin.front();
 		lin.pop_front();
 	}
-	ss<<"\n";//printf("\n");
+	ss<<"\n";
 
 	i = right + 1;
 }
@@ -184,15 +194,15 @@ void BoyerMooreSearch::skip_line(int fd,int64_t& i,int64_t& k,int64_t m,char* bu
 	{
 		while( right + loc < min(m,k) )
 		{
-			if(buf[loc]=='\n') break;
+			if(buf[loc] == '\n') break;
 			loc++;
 		}
 
 		if(loc == PAGESIZE)
 		{
 			if(k<m){
-				lseek(fd,k,SEEK_SET);
-				read(fd,buf,PAGESIZE);
+				error_handler(lseek(fd,k,SEEK_SET),"File Read Error");
+				error_handler(read(fd,buf,PAGESIZE),"File Read Error");
 			}
 			k += PAGESIZE;
 			right = k - PAGESIZE;
@@ -214,12 +224,17 @@ int BoyerMooreSearch::BM(int id, const char* path)//states (0-3) are here
 	stringstream ss;
 	bool done = 0;
 	int fd = open(path,O_RDONLY), jump, j, line_count = 0;
-	if(fd == -1) return 1;
+	error_handler(fd);
 	int64_t i = 0, k = 0,m = lseek(fd,0,SEEK_END);//i = start
-	lseek(fd,0,SEEK_SET);
+	error_handler(m);
+
+	error_handler(lseek(fd,0,SEEK_SET));
+
 	k = PAGESIZE;
 	char buf[PAGESIZE];
-	read(fd,buf,PAGESIZE);
+
+	error_handler(read(fd,buf,PAGESIZE));
+
 	while(!done && i+n <= m)
 	{
 		while(i + 3*n < min(m,k)){//loop unrolled for speed
@@ -231,8 +246,8 @@ int BoyerMooreSearch::BM(int id, const char* path)//states (0-3) are here
 		
 		if(i + n > min(m,k))
 		{
-			lseek(fd,i,SEEK_SET);
-			read(fd,buf,PAGESIZE);
+			error_handler(lseek(fd,i,SEEK_SET));
+			error_handler(read(fd,buf,PAGESIZE));
 			k = i + PAGESIZE;
 			continue;
 		}
@@ -304,12 +319,17 @@ int BoyerMooreSearch::BM_N(int id, const char* path)
 {
 	stringstream ss;
 	int fd = open(path,O_RDONLY), jump, j;
-	if(fd == -1) return 1;
+	error_handler(fd);
+	
 	int64_t i = 0,k = 0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
-	lseek(fd,0,SEEK_SET);
+	
+	error_handler(lseek(fd,0,SEEK_SET));
+	
 	k = PAGESIZE;
 	char buf[PAGESIZE];
-	read(fd,buf,PAGESIZE);
+	
+	error_handler(read(fd,buf,PAGESIZE));
+
 	while(i + n <= m)
 	{
 		while(i + 3*n < min(m,k)){//loop unrolled for speed
@@ -329,8 +349,8 @@ int BoyerMooreSearch::BM_N(int id, const char* path)
 
 		if(i + n > min(m,k))
 		{
-			lseek(fd,i,SEEK_SET);
-			read(fd,buf,PAGESIZE);
+			error_handler(lseek(fd,i,SEEK_SET));
+			error_handler(read(fd,buf,PAGESIZE));
 			k = i + PAGESIZE;
 			continue;
 		}
@@ -358,8 +378,13 @@ int BoyerMooreSearch::BM_N(int id, const char* path)
 	return 0;
 }
 
-void BoyerMooreSearch::search(int id,char* path)
+void BoyerMooreSearch::search(int id,string path)
 {
-	if(state == 4) BM_N(id,path);
-	else BM(id,path);
+	try{
+		if(state == 4) BM_N(id,path.data());
+		else BM(id,path.data());
+	}
+	catch{
+		fprintf(stderr,"Stop searching file because of error in system calls\n");
+	}
 }
