@@ -23,6 +23,7 @@ namespace parser {
   char * PATTERN;
   char * PATH;
   bool F_flag=0,r_flag=0,i_flag=0,v_flag=0,G_flag=0,n_flag=0,c_flag=0;
+  int l = -1;
   int return_value = 0;
   };
 

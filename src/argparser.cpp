@@ -75,6 +75,7 @@ struct parser::output parser::parse(int argc, char **argv)
   bool F_flag=0,r_flag=0,i_flag=0,v_flag=0,G_flag=0,n_flag=0,c_flag=0;
   char *path = initialpath;
   char *PATTERN = NULL;
+  int l = -1;
   int p = 0;
   struct output ret;
   //ret.PATH = path;
@@ -93,6 +94,8 @@ struct parser::output parser::parse(int argc, char **argv)
     {"basic-regex",   optional_argument, 0, 'G'},
     {"line-number",   no_argument,       0, 'n'},
     {"count",   no_argument,             0, 'c'},
+    {"files-without-match", no_argument, 0, 'l'},
+    {"files-with-matches", no_argument,  0, 'L'},
     {0, 0, 0, 0}
   };
   int option_index = 0;
@@ -105,7 +108,7 @@ struct parser::output parser::parse(int argc, char **argv)
     {
       /// getopt_long stores the option index here.
       option_index = 0;
-      c = getopt_long(argc, argv, "F::e::riyvG::n",long_options, &option_index);
+      c = getopt_long(argc, argv, "F::e::riyvG::nclL",long_options, &option_index);
 
       /// Detect the end of the options.
       if (c == -1) break;
@@ -147,6 +150,14 @@ struct parser::output parser::parse(int argc, char **argv)
           break;
         case 'r':
           r_flag=1;
+          break;
+        case 'l':
+          //lL_flag=1;
+          l = 0;
+          break;
+        case 'L':
+          //lL_flag=1;
+          l = 1;
           break;
         case 'c':
           c_flag=1;
@@ -248,6 +259,7 @@ struct parser::output parser::parse(int argc, char **argv)
   ret.n_flag =n_flag;
   ret.c_flag =c_flag;
   ret.return_value = 0;
+  ret.l = l;
   /*printf("pattern : %s\npath : %s\n",ret.PATTERN,ret.PATH);
   printf("F_flag:%d\n",F_flag);
   printf("r_flag:%d\n",r_flag);

@@ -54,7 +54,10 @@ int call::call_file_tree_walk(struct parser::output ret)
   char* path = ret.PATH;
   bool isfile = is_file(ret.PATH);
   int flags = 0;
-  BM::pre_process(paat, ret.i_flag ,isfile);
+  if(ret.n_flag == 1) flags = 4;
+  if(ret.c_flag == 1) flags = 3;
+  if (ret.l !=-1) flags = ret.l +1
+  BM::pre_process(paat, ret.i_flag ,isfile,flags);
   if(nftw(path, push_to_threadpool, 20, flags)== -1) 
   {
     perror("grape");
@@ -79,9 +82,12 @@ int call::go(struct parser::output ret)
     char* path = ret.PATH;
     bool isfile = is_file(ret.PATH);
     int flags = 0;
-    BM::pre_process(paat, ret.i_flag ,isfile);
+    if(ret.n_flag == 1) flags = 4;
+    if(ret.c_flag == 1) flags = 3;
+    if (ret.l !=-1) flags = ret.l +1;
+    BM::pre_process(paat, ret.i_flag ,isfile,flags);
     int num_threads = 8;
-    nflag_ftw = ret.n_flag;
+    nflag_ftw = (flags == 4); //comment it
     if(is_file(ret.PATH)){
       if(nflag_ftw) BM::BM_N(0,ret.PATH);
       else BM::BM(0,ret.PATH);
