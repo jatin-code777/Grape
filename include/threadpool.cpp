@@ -1,8 +1,10 @@
 #include "threadpool.h"
 #include "atomic_queue.h"
+#include <functional>
 
 int main()
 {
-	detail::Atomic_Queue<int> a;
-	a.push(1);
+	
+	
+	
 }
