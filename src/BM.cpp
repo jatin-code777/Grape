@@ -338,7 +338,7 @@ int BM::BM(int id, const char* path)//standard(0) and count(3) states are here
 		case 3:
 			if(ignore_name) ss<<line_count<<"\n";
 			else if(tty) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET<<line_count<<"\n";
-			else ss<<path<<":"<<line_count;
+			else ss<<path<<":"<<line_count<<"\n";
 			break;
 		default:
 			ss<<"Invalid flag status\n";

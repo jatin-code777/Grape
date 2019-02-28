@@ -169,7 +169,7 @@ namespace thread_manager {
 			auto f = new std::function<void(int)>(
 						[func_pack](int id) { (*func_pack)(id); }
 					);
-			Q.push(func);
+			Q.push(f);
 			detail::autoRAII_lock lock(mutex);
 			cv.notify_one();
 			return func_pack->get_future();
