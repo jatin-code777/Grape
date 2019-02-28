@@ -54,10 +54,10 @@ int call::call_file_tree_walk(struct parser::output ret)
   char* path = ret.PATH;
   bool isfile = is_file(ret.PATH);
   int flags = 0;
-  if(ret.n_flag == 1) flags = 4;
-  if(ret.c_flag == 1) flags = 3;
-  if (ret.l !=-1) flags = ret.l + 1;
-  BM::pre_process(paat, ret.i_flag ,isfile,flags);
+  // if(ret.n_flag == 1) flags = 4;
+  // if(ret.c_flag == 1) flags = 3;
+  // if (ret.l !=-1) flags = ret.l + 1;
+  // BM::pre_process(paat, ret.i_flag ,isfile,flags);
   if(nftw(path, push_to_threadpool, 20, flags)== -1) 
   {
     perror("grape");
