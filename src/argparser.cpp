@@ -20,7 +20,6 @@ void parser::print_help()
   printf(" -i,   --ignore-case          ignore case distinctions\n");
   printf("\n");
   printf("Miscellaneous:\n");
-  printf(" -v,   --invert-match        select non-matching lines\n");
   printf("       --version             display version information and exit\n");
   printf("       --help                display this help text and exit\n");
   printf("       --usage               display usage text and exit\n");
@@ -51,6 +50,7 @@ void parser::print_version()
   printf("Written by Dhananjay Raut, Sahil Shah, Jatin Sharma and Raja Naik\n");
 }
 
+char initialpath[] = ".";
 /**
  * @brief      parse Command line input
  *
@@ -59,15 +59,6 @@ void parser::print_version()
  *
  * @return     return 0 on sucess returns 1 else 
  */
-/*struct output
-{
-  char * PATTERN;
-  char * PATH;
-  bool F_flag=0,r_flag=0,i_flag=0,v_flag=0,G_flag=0,n_flag=0;
-  int return_value = 0;
-};*/
-
-char initialpath[] = ".";
 struct parser::output parser::parse(int argc, char **argv)
 {
   static int help_flag=0, usage_flag=0,version_flag=0;
@@ -90,7 +81,6 @@ struct parser::output parser::parse(int argc, char **argv)
     {"fixed-string",  optional_argument, 0, 'F'},
     {"recursive",     no_argument,       0, 'r'},
     {"ignore-case",   no_argument,       0, 'i'},
-    {"invert-match",  no_argument,       0, 'v'},
     {"basic-regex",   optional_argument, 0, 'G'},
     {"line-number",   no_argument,       0, 'n'},
     {"count",   no_argument,             0, 'c'},
@@ -108,7 +98,7 @@ struct parser::output parser::parse(int argc, char **argv)
     {
       /// getopt_long stores the option index here.
       option_index = 0;
-      c = getopt_long(argc, argv, "F::e::riyvG::nclL",long_options, &option_index);
+      c = getopt_long(argc, argv, "F::e::riyG::nclL",long_options, &option_index);
 
       /// Detect the end of the options.
       if (c == -1) break;
