@@ -10,12 +10,16 @@
 #include <sstream>
 #include <mutex>
 #include <unistd.h>
-
+#define COLOR_RED           "[32m[K"
+#define COLOR_RED_BOLD      "[01;31m[K"
+#define COLOR_CYAN          "[36m[K"
+#define COLOR_PURPLE        "[35m[K"
+#define COLOR_RESET         "[m[K"
 
 #define ALPHABET_SIZE 256
 using namespace std;
 
-
+bool tty = (isatty(STDOUT_FILENO)==1);
 auto comp = [](char a, char b) { return a==b ;};//general == character comparision
 auto comp_ig = [](char a, char b) { return (a|' ') == (b|' '); };//ignore case comparator
 function<bool(char,char)> eq;
@@ -60,7 +64,6 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 
 		if(loc == -1)
 		{
-			ss<<"---wtf---";
 			blockshift--;
 			k -= PAGESIZE;
 			left = k - 1;
@@ -91,10 +94,10 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 	if(blockshift<0)
 		pread(fd,buf,PAGESIZE,k_-PAGESIZE);
 	
-	if(isatty(STDOUT_FILENO)==1) ss<<"\033[1;31m"<<pat<<"\033[0m";
+	if(tty) ss<<COLOR_RED_BOLD<<pat<<COLOR_RESET;
 	else ss<<pat; //printf("%s",pat);//print the pattern /*TODO : in red*/
 	int red = 0;
-	
+
 	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l = 0;
 	while(right < m)
 	{
@@ -113,7 +116,7 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 				{
 					if(red > 0)
 					{
-						if(isatty(STDOUT_FILENO)==1)ss<<"\033[1;31m"<<lin.front()<<"\033[0m";
+						if(tty)ss<<COLOR_RED_BOLD<<lin.front()<<COLOR_RESET;
 						else ss<<lin.front();
 						red--;
 					}//printf("%c",buf[loc]);
@@ -146,7 +149,7 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 	while(lin.size() > 0){
 		if(red > 0)
 		{
-			if(isatty(STDOUT_FILENO)==1) ss<<"\033[1;31m"<<lin.front()<<"\033[0m";
+			if(tty) ss<<COLOR_RED_BOLD<<lin.front()<<COLOR_RESET;
 			else ss<<lin.front();
 			red--;
 		}//printf("%c",buf[loc]);
@@ -291,13 +294,17 @@ int BM::BM(int id, const char* path)//standard(0) and count(3) states are here
 			switch(state)
 			{
 				case 0:
-					if(ignore_name==0) ss<<path;//printf("%s:",path);
-						// printf("%" PRId64 ": ",i);
-						print_line(fd,i,k,m,buf,ss);
+					if(ignore_name==0){
+						if(tty)	ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf("%s:",path);
+						else ss<<path<<":";
+					}
+					// printf("%" PRId64 ": ",i);
+					print_line(fd,i,k,m,buf,ss);
 					break;
 				
 				case 1:
-					ss<<path<<"\n";
+					if(tty) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;
+					else ss<<path<<":";
 					done = 1;
 					break;
 
@@ -326,11 +333,12 @@ int BM::BM(int id, const char* path)//standard(0) and count(3) states are here
 		case 1:
 			break;
 		case 2:
-			if(!done) ss<<path<<"\n";
+			if(!done) ss<<(tty?COLOR_PURPLE:"")<<path<<(tty?COLOR_RESET:"")<<"\n";
 			break;
 		case 3:
 			if(ignore_name) ss<<line_count<<"\n";
-			else ss<<path<<":"<<line_count<<"\n";
+			else if(tty) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET<<line_count<<"\n";
+			else ss<<path<<":"<<line_count;
 			break;
 		default:
 			ss<<"Invalid flag status\n";
@@ -348,12 +356,12 @@ int BM::BM_N(int id, const char* path)
 	stringstream ss;
 	int fd = open(path,O_RDONLY),jump,j;
 	if(fd == -1) return 1;
-	int64_t i=0,k=0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
+	int64_t i = 0,k = 0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
 	lseek(fd,0,SEEK_SET);
 	k += PAGESIZE;
 	char buf[PAGESIZE];
 	read(fd,buf,PAGESIZE);
-	while(i+n <= m)
+	while(i + n <= m)
 	{
 		while(i + 3*n < min(m,k)){//loop unrolled for speed
 			jump = jt[(int)buf[i - k + PAGESIZE + n - 1]];
@@ -369,7 +377,7 @@ int BM::BM_N(int id, const char* path)
 			i += jump;
 			if(!jump) break;
 		}
-		if(i+n > min(m,k))
+		if(i + n > min(m,k))
 		{
 			lseek(fd,i,SEEK_SET);
 			read(fd,buf,PAGESIZE);
@@ -381,8 +389,8 @@ int BM::BM_N(int id, const char* path)
 
 		if(j==-1)
 		{
-			if(ignore_name==0) ss<<path;//printf("%s:",path);
-			ss<<line_no<<":";//printf("%" PRId64 ":",line_no);
+			if(ignore_name==0) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf("%s:",path);
+			ss<<COLOR_RED<<line_no<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf("%" PRId64 ":",line_no);
 			print_line(fd,i,k,m,buf,ss);
 			line_no++;
 		}
