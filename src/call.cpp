@@ -7,7 +7,7 @@
 #include <string>
 #include <string.h>
 #include <unordered_set> 
-
+#include "search_regex.cpp"
 char * paat;
 bool nflag_ftw = 0;
 thread_manager::ThreadPool * tp;
@@ -20,12 +20,15 @@ std::unordered_set <std::string> extset{".txt",".cpp", ".c", ".txt",
 
 //int fcall(int id, std::string path)   {return search(id, searcher ,path.data());};
 //int fBM_N(int id, std::string path) {return BM::BM_N(id,path.data());};
-void decider(bool regex, SearchStrategy* searcher)
+void decider(bool regex, SearchStrategy* & searcher)
 {
-	if(regex) searcher = new RegexSearch;
+	if(regex) searcher = new regex_search;
 	else searcher = new BoyerMooreSearch;
 }
 
+void search(int id, SearchStrategy * searcher , std::string path) {
+  searcher->search(id,path);
+}
 
 int call::push_to_threadpool(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
 {
@@ -105,7 +108,7 @@ int call::go(struct parser::output ret)
   }
   else
   {
-    searcher->decider(ret.G_flag);
+    decider(ret.G_flag,searcher);
     paat = ret.PATTERN;
     char* path = ret.PATH;
     bool isfile = is_file(ret.PATH);
@@ -126,7 +129,7 @@ int call::go(struct parser::output ret)
   }  
   
 
-  
+
   return return_value;
 
 }

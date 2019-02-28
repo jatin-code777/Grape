@@ -12,7 +12,7 @@
 	{
 	public:
 
-		void pre_process(const char* pattern, bool ignore_case, bool single_file , int flags)
+		void pre_process(char* pattern, bool ignore_case, bool single_file , int flags)
 		{
 			using namespace std::regex_constants;
 			auto flag_mask = nosubs | optimize ; //Specify grammar
