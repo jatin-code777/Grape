@@ -7,14 +7,37 @@
 	class regex_search
 	{
 	public:
-		regex_search(char* pattern, bool ignore_case, bool color) {
+		regex_search(const char* pattern, bool ignore_case, bool color)
+		{
 			using namespace std::regex_constants;
 			auto flag_mask = nosubs | optimize | basic;
 			if(ignore_case) flag_mask |= icase;
-			exp.assign(pattern, flag_mask);
+			try {
+				exp.assign(pattern, flag_mask);
+			}
+			catch (std::regex_error& e) {
+				std::cerr << "regex_error :" << e.what() << '\n';
+				// What to do now ??
+			}
 		}
 
+		void search(const char* path)
+		{
+			std::ifstream input(path);
+			if(!input.is_open()) {
+				std::cerr << "grape: Invalid input file. Unable to open " << path << '\n' ;
+				return;
+			}
+			try 
+			{
 
+
+
+			}
+			catch(std::regex_error e) {
+
+			}
+		}
 
 	private:
 		// bool insensitive
