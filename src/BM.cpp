@@ -28,7 +28,7 @@ int n,PAGESIZE = getpagesize()*32;
 char* pat;
 bool ignore_case = 0;
 bool ignore_name = 0;
-int state=0;
+int state = 0;
 std::mutex print_mutex;
 //n = pattern length
 //occ[i] = last occurance index of character with ASCII value i in the pattern.
@@ -47,8 +47,8 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 {
 	deque<char> out;
 	deque<char> lin;
-	int blockshift=0;
-	int loc = i - 1 - k + PAGESIZE,l=0;
+	int blockshift = 0;
+	int loc = i - 1 - k + PAGESIZE,l = 0;
 	int64_t left = i-1, right = i + n,k_ = k;
 	while(left != -1)
 	{ 
@@ -56,10 +56,7 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 			if(buf[loc] == '\n')
 				break;
 			else
-			{
-				out.push_front(buf[loc]);
-				loc--;
-			}
+				out.push_front(buf[loc--]);
 		}
 
 		if(loc == -1)
@@ -78,17 +75,10 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 	}
 	left += 1;
 
-	// if(blockshift<0){
-		while(!out.empty()){
-			ss<<out.front();//printf("%c",out.front());
-			out.pop_front();
-		}
-	/*} //handle 
-	else
-		for(loc = left - k + PAGESIZE; loc < i - k + PAGESIZE; loc++)
-			printf("%c",buf[loc]);
-	//just iterate over block // print from left till pattern point
-	*/
+	while(!out.empty()){
+		ss<<out.front();
+		out.pop_front();
+	}
 
 	//blockshift<0 check----
 	if(blockshift<0)
@@ -101,14 +91,14 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l = 0;
 	while(right < m)
 	{
-		while(right + loc < min(m,k))//add here to stop going ahead of end
+		while(right + loc < min(m,k))
 		{
 			if(buf[loc] == '\n') break;
 			else{
 				while(l!=-1 && buf[loc]!=pat[l]) l = l ? lps[l-1] : -1;
 				l++;
 				if(l==n){
-					red = n;//match(ss);
+					red = n;
 					l = 0;
 				}
 				lin.push_back(buf[loc]);
@@ -119,7 +109,7 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 						if(tty)ss<<COLOR_RED_BOLD<<lin.front()<<COLOR_RESET;
 						else ss<<lin.front();
 						red--;
-					}//printf("%c",buf[loc]);
+					}
 					else ss<<lin.front();
 					lin.pop_front();
 				}
@@ -132,7 +122,6 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 			if(k<m){
 				lseek(fd,k,SEEK_SET);
 				read(fd,buf,PAGESIZE);
-				// pread(fd,buf,PAGESIZE,right);
 			}
 			k += PAGESIZE;
 			right = k - PAGESIZE;
@@ -259,15 +248,16 @@ void BM::skip_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 	right++;
 }
 
-int BM::BM(int id, const char* path)//standard(0) and count(3) states are here
+
+int BM::BM(int id, const char* path)//states (0-3) are here
 {
 	stringstream ss;
 	bool done = 0;
-	int fd = open(path,O_RDONLY),jump,j,line_count = 0;
+	int fd = open(path,O_RDONLY), jump, j, line_count = 0;
 	if(fd == -1) return 1;
-	int64_t i=0,k=0,m = lseek(fd,0,SEEK_END);//i = start
+	int64_t i = 0, k = 0,m = lseek(fd,0,SEEK_END);//i = start
 	lseek(fd,0,SEEK_SET);
-	k += PAGESIZE;
+	k = PAGESIZE;
 	char buf[PAGESIZE];
 	read(fd,buf,PAGESIZE);
 	while(!done && i+n <= m)
@@ -298,13 +288,12 @@ int BM::BM(int id, const char* path)//standard(0) and count(3) states are here
 						if(tty)	ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf("%s:",path);
 						else ss<<path<<":";
 					}
-					// printf("%" PRId64 ": ",i);
 					print_line(fd,i,k,m,buf,ss);
 					break;
 				
 				case 1:
-					if(tty) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;
-					else ss<<path<<":";
+					if(tty) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<"\n";
+					else ss<<path<<"\n";
 					done = 1;
 					break;
 
@@ -321,7 +310,7 @@ int BM::BM(int id, const char* path)//standard(0) and count(3) states are here
 					ss<<"Invalid flag status\n";
 					done = 1;
 					break;
-			}			
+			}
 		}
 		else
 			i += max(s[j+1],j - occ[(int)buf[i - k + PAGESIZE + j]]);
@@ -338,7 +327,7 @@ int BM::BM(int id, const char* path)//standard(0) and count(3) states are here
 		case 3:
 			if(ignore_name) ss<<line_count<<"\n";
 			else if(tty) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET<<line_count<<"\n";
-			else ss<<path<<":"<<line_count;
+			else ss<<path<<":"<<line_count<<"\n";
 			break;
 		default:
 			ss<<"Invalid flag status\n";
@@ -354,11 +343,11 @@ int BM::BM(int id, const char* path)//standard(0) and count(3) states are here
 int BM::BM_N(int id, const char* path)
 {
 	stringstream ss;
-	int fd = open(path,O_RDONLY),jump,j;
+	int fd = open(path,O_RDONLY), jump, j;
 	if(fd == -1) return 1;
 	int64_t i = 0,k = 0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
 	lseek(fd,0,SEEK_SET);
-	k += PAGESIZE;
+	k = PAGESIZE;
 	char buf[PAGESIZE];
 	read(fd,buf,PAGESIZE);
 	while(i + n <= m)
@@ -377,6 +366,7 @@ int BM::BM_N(int id, const char* path)
 			i += jump;
 			if(!jump) break;
 		}
+
 		if(i + n > min(m,k))
 		{
 			lseek(fd,i,SEEK_SET);
@@ -397,7 +387,7 @@ int BM::BM_N(int id, const char* path)
 		else
 		{
 			jump = max(s[j+1],j - occ[(int)buf[ i - k + PAGESIZE + j ]]);
-			for(ch = 0; ch<jump; ch++)	if(buf[ i - k + PAGESIZE + ch ]=='\n') line_no++;
+			for(ch = 0; ch<jump; ch++) if(buf[ i - k + PAGESIZE + ch ]=='\n') line_no++;
 			i += jump;
 		}
 	}
