@@ -1,49 +1,7 @@
-#include <iostream>
-#include <vector>
-#include <cstring>
-#include <unistd.h>
-#include <fcntl.h>
-#include <functional>
-#include <inttypes.h>
 #include "BM.h"
-#include <deque>
-#include <sstream>
-#include <mutex>
-#include <unistd.h>
-#define COLOR_RED           "[32m[K"
-#define COLOR_RED_BOLD      "[01;31m[K"
-#define COLOR_CYAN          "[36m[K"
-#define COLOR_PURPLE        "[35m[K"
-#define COLOR_RESET         "[m[K"
-
-#define ALPHABET_SIZE 256
 using namespace std;
 
-bool tty = (isatty(STDOUT_FILENO)==1);
-auto comp = [](char a, char b) { return a==b ;};//general == character comparision
-auto comp_ig = [](char a, char b) { return (a|' ') == (b|' '); };//ignore case comparator
-function<bool(char,char)> eq;
-int occ[ALPHABET_SIZE],jt[ALPHABET_SIZE];
-int n,PAGESIZE = getpagesize()*32;
-char* pat;
-bool ignore_case = 0;
-bool ignore_name = 0;
-int state = 0;
-std::mutex print_mutex;
-//n = pattern length
-//occ[i] = last occurance index of character with ASCII value i in the pattern.
-//occ[i] = -1 --> that characeter doesn't exist in the search pattern 
-//jt is jumptable based on bad character heuristic due to mismatch at the last position
-
-vector<int> lps;
-vector<int> s,f;
-//f[i] = starting point of longest suffix of pat[i....n] that is also its prefix
-//f[i] >= pattern length --> such a suffix doesn't exist
-//s[i] = shift to be made based on good suffix heuristics, when index i does not match, the rest of the suffix matches
-//s[i] is the MINIMUM shift such that the part that is already matched matches, and the mismatched character gets changed
-
-
-void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstream &ss)
+void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstream &ss)
 {
 	deque<char> out;
 	deque<char> lin;
@@ -150,7 +108,7 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 	i = right + 1;
 }
 
-void BM::build_occ()
+void BoyerMooreSearch::build_occ()
 {
 	n = strlen(pat);
 	memset(occ,-1,sizeof(occ));
@@ -165,7 +123,7 @@ void BM::build_occ()
 		jt[i] = n - 1 - occ[i];
 }
 
-void BM::case1_good_suffix()
+void BoyerMooreSearch::case1_good_suffix()
 {
 	int i = n + 1, j = n + 2;
 	while(i>0)
@@ -180,7 +138,7 @@ void BM::case1_good_suffix()
 	}
 }
 
-void BM::case2_good_suffix()
+void BoyerMooreSearch::case2_good_suffix()
 {
 	int i=0,j=f[0];
 	for(;i<=n;i++)
@@ -190,7 +148,7 @@ void BM::case2_good_suffix()
 	}
 }
 
-void BM::build_lps()
+void BoyerMooreSearch::build_lps()
 {
 	int i = 1 , l = lps[0] = 0;
 	while(i<n)
@@ -201,7 +159,7 @@ void BM::build_lps()
 }
 
 
-void BM::pre_process(char* patt, bool ic, bool ig_name, int flags)
+void BoyerMooreSearch::pre_process(char* patt, bool ic, bool ig_name, int flags)
 {
 	state = flags;
 	eq = ic?comp_ig:comp;
@@ -217,13 +175,13 @@ void BM::pre_process(char* patt, bool ic, bool ig_name, int flags)
 }
 
 
-void BM::skip_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
+void BoyerMooreSearch::skip_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 {
 	int64_t& right = i;
 	int loc = right + n - k + PAGESIZE; right = k - PAGESIZE;
 	while(right < m)
 	{
-		while(right + loc < min(m,k))
+		while( right + loc < min(m,k) )
 		{
 			if(buf[loc]=='\n') break;
 			loc++;
@@ -250,7 +208,7 @@ void BM::skip_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 }
 
 
-int BM::BM(int id, const char* path)//states (0-3) are here
+int BoyerMooreSearch::BM(int id, const char* path)//states (0-3) are here
 {
 	stringstream ss;
 	bool done = 0;
@@ -341,7 +299,7 @@ int BM::BM(int id, const char* path)//states (0-3) are here
 }
 
 
-int BM::BM_N(int id, const char* path)
+int BoyerMooreSearch::BM_N(int id, const char* path)
 {
 	stringstream ss;
 	int fd = open(path,O_RDONLY), jump, j;
@@ -397,4 +355,10 @@ int BM::BM_N(int id, const char* path)
 	print_mutex.unlock();
 	close(fd);
 	return 0;
+}
+
+void BoyerMooreSearch::search(int id,char* path)
+{
+	if(state == 4) BM_N(id,path);
+	else BM(id,path);
 }
