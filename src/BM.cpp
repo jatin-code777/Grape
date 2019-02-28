@@ -48,16 +48,19 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 	int64_t left = i-1, right = i + n,k_ = k;
 	while(left != -1)
 	{ 
-		while(loc >= 0)
+		while(loc >= 0){
 			if(buf[loc] == '\n')
 				break;
-			else{
+			else
+			{
 				out.push_front(buf[loc]);
 				loc--;
 			}
+		}
 
 		if(loc == -1)
 		{
+			ss<<"---wtf---";
 			blockshift--;
 			k -= PAGESIZE;
 			left = k - 1;
@@ -83,15 +86,21 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 			printf("%c",buf[loc]);
 	//just iterate over block // print from left till pattern point
 	*/
-	if(isatty(STDOUT_FILENO)==1)ss<<"\033[1;31m"<<pat<<"\033[0m";
-	else ss<<pat;//printf("%s",pat);//print the pattern	/*TODO : in red*/
+
+	//blockshift<0 check----
+	if(blockshift<0)
+		pread(fd,buf,PAGESIZE,k_-PAGESIZE);
+	
+	if(isatty(STDOUT_FILENO)==1) ss<<"\033[1;31m"<<pat<<"\033[0m";
+	else ss<<pat; //printf("%s",pat);//print the pattern /*TODO : in red*/
 	int red = 0;
-	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l=0; 
+	
+	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l = 0;
 	while(right < m)
 	{
 		while(right + loc < min(m,k))//add here to stop going ahead of end
 		{
-			if(buf[loc]=='\n') break;
+			if(buf[loc] == '\n') break;
 			else{
 				while(l!=-1 && buf[loc]!=pat[l]) l = l ? lps[l-1] : -1;
 				l++;
@@ -100,25 +109,31 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 					l = 0;
 				}
 				lin.push_back(buf[loc]);
-				if(lin.size() == n){
-				if(red > 0) {if(isatty(STDOUT_FILENO)==1)ss<<"\033[1;31m"<<lin.front()<<"\033[0m";
-	else ss<<lin.front();red--;}//printf("%c",buf[loc]);
-				else ss<<lin.front(); lin.pop_front();}
-				loc ++;
-				
+				if(lin.size() == n)
+				{
+					if(red > 0)
+					{
+						if(isatty(STDOUT_FILENO)==1)ss<<"\033[1;31m"<<lin.front()<<"\033[0m";
+						else ss<<lin.front();
+						red--;
+					}//printf("%c",buf[loc]);
+					else ss<<lin.front();
+					lin.pop_front();
+				}
+				loc ++;				
 			}
 		}
 
 		if(loc == PAGESIZE)
 		{
-			k += PAGESIZE;
-			right = k - PAGESIZE;
-			loc = 0;
 			if(k<m){
 				lseek(fd,k,SEEK_SET);
 				read(fd,buf,PAGESIZE);
 				// pread(fd,buf,PAGESIZE,right);
 			}
+			k += PAGESIZE;
+			right = k - PAGESIZE;
+			loc = 0;
 		}
 		else
 		{
@@ -126,13 +141,21 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstre
 			break;
 		}
 	}
+
 	right = min(right,m);
 	while(lin.size() > 0){
-	if(red > 0) {if(isatty(STDOUT_FILENO)==1)ss<<"\033[1;31m"<<lin.front()<<"\033[0m";
-	else ss<<lin.front();red--;}//printf("%c",buf[loc]);
-	else ss<<lin.front(); lin.pop_front();}
+		if(red > 0)
+		{
+			if(isatty(STDOUT_FILENO)==1) ss<<"\033[1;31m"<<lin.front()<<"\033[0m";
+			else ss<<lin.front();
+			red--;
+		}//printf("%c",buf[loc]);
+		else ss<<lin.front();
+		lin.pop_front();
+	}
 	ss<<"\n";//printf("\n");
-	i = right+1;
+
+	i = right + 1;
 }
 
 void BM::build_occ()
@@ -215,13 +238,13 @@ void BM::skip_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 
 		if(loc == PAGESIZE)
 		{
-			k += PAGESIZE;
-			right = k - PAGESIZE;
-			loc = 0;
 			if(k<m){
 				lseek(fd,k,SEEK_SET);
 				read(fd,buf,PAGESIZE);
 			}
+			k += PAGESIZE;
+			right = k - PAGESIZE;
+			loc = 0;
 		}
 		else
 		{
@@ -360,7 +383,7 @@ int BM::BM_N(int id, const char* path)
 		{
 			if(ignore_name==0) ss<<path;//printf("%s:",path);
 			ss<<line_no<<":";//printf("%" PRId64 ":",line_no);
-			print_line(fd,i,k,m,buf,ss);	
+			print_line(fd,i,k,m,buf,ss);
 			line_no++;
 		}
 		else
