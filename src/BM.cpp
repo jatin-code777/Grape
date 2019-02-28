@@ -378,7 +378,7 @@ int BoyerMooreSearch::BM_N(int id, const char* path)
 	return 0;
 }
 
-void BoyerMooreSearch::search(int id,string path)
+void BoyerMooreSearch::search(int id,std::string path)
 {
 	try{
 		if(state == 4) BM_N(id,path.data());

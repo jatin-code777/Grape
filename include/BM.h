@@ -8,20 +8,21 @@
 #include <vector>
 #include <mutex>
 #include <deque>
-
+#include "SearchStrategy.h"
 #include "color.h"
+
 
 #ifndef BM_H
 #define BM_H
 
 #define ALPHABET_SIZE 256
 
-class BoyerMooreSearch
+class BoyerMooreSearch : public SearchStrategy
 {
 	private:
-		auto comp = [](char a, char b) { return a==b ;};//general == character comparision
-		auto comp_ig = [](char a, char b) { return (a|' ') == (b|' '); };//ignore case comparator
-		function<bool(char,char)> eq;
+		std::function <bool(char,char)> comp = [](char a, char b) { return a==b ;};//general == character comparision
+		std::function <bool(char,char)> comp_ig = [](char a, char b) { return (a|' ') == (b|' '); };//ignore case comparator
+		std::function <bool(char,char)> eq;
 		
 		int occ[ALPHABET_SIZE], jt[ALPHABET_SIZE];
 		int PAGESIZE = getpagesize()*32;
@@ -40,8 +41,8 @@ class BoyerMooreSearch
 		//occ[i] = -1 --> that characeter doesn't exist in the search pattern 
 		//jt is jumptable based on bad character heuristic due to mismatch at the last position
 
-		vector<int> lps;
-		vector<int> s,f;
+		std::vector<int> lps;
+		std::vector<int> s,f;
 		//f[i] = starting point of longest suffix of pat[i....n] that is also its prefix
 		//f[i] >= pattern length --> such a suffix doesn't exist
 		//s[i] = shift to be made based on good suffix heuristics, when index i does not match, the rest of the suffix matches
@@ -65,7 +66,7 @@ class BoyerMooreSearch
 		 * All indices for which the following suffix has another instance in the pattern are handled in case 1 of the good suffix rule.
 		 *			   
 		 */
-		void build_case1_good_suffix();
+		void case1_good_suffix();
 		
 		/**
 		 * @brief      pre_processes pattern to calculate shift calue s[i] for indices(i), based on case 2 of the good suffix rule. 
@@ -122,7 +123,7 @@ class BoyerMooreSearch
 		 * @param[in]  id    The thread identifier
 		 * @param[in]  path  The input file path
 		 */
-		void search(int id, const char* path);
+		void search(int id, std::string path);
 
 
 
@@ -151,6 +152,6 @@ class BoyerMooreSearch
 		 * @param      buf   The buffer
 		 * @param      ss    output string stream for file
 		 */
-		void print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstream &ss);
+		void print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, std::stringstream &ss);
 };
 #endif
