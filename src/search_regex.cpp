@@ -3,13 +3,13 @@
 void regex_search::pre_process(char* pattern, bool ignore_case, bool single_file , int flags)
 {
 	using namespace std::regex_constants;
-	auto flag_mask = nosubs | optimize | basic ; //Specify grammar
+	auto flag_mask = nosubs | optimize | basic;
 	if(ignore_case) flag_mask |= icase;
 	try {
 		expr.assign(pattern, flag_mask);
 	} catch (std::regex_error& e) {
 		std::cerr << "regex_error : " << e.what() << '\n';
-		throw e;	// What to do now ??
+		throw e; //Throw on invalid regex
 	}
 
 	print_file_name		= !single_file;
