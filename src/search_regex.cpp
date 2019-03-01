@@ -24,7 +24,7 @@ void regex_search::pre_process(char* pattern, bool ignore_case, bool single_file
 
 void regex_search::search(int id, std::string path) {
 	std::ifstream input;
-	detail::RAII_acquireFile(input,path);
+	detail::RAII_acquireFile file(input,path);
 	if(not input.is_open()) {
 		std::lock_guard<std::mutex> lock(print_mutex);
 		fprintf(stderr,"grape: Unable to open: %s\n",path.data());
