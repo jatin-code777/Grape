@@ -4,6 +4,7 @@
 
 /// Flags set by '--help','--usage', '--version' 
 
+
 /**
  * @brief      prints help for our program
  */
@@ -30,6 +31,8 @@ void parser::print_help()
 	printf(" -L,   --files-without-match  print only names of FILEs with no selected lines\n");
 	printf(" -l,   --files-with-matches   print only names of FILEs with selected lines\n");
 }
+
+
 /**
  * @brief      prints usage instructions
  */
@@ -38,6 +41,7 @@ void parser::print_usage()
 	printf("Usage: grape [OPTION]... PATTERN [FILE]\n");
 	printf("for more detailed discription use --help\n");
 }
+
 
 /**
  * @brief      prints version and copyright information
@@ -53,6 +57,8 @@ void parser::print_version()
 }
 
 char initialpath[] = ".";
+
+
 /**
  * @brief      parse Command line input
  *
@@ -90,12 +96,15 @@ struct parser::output parser::parse(int argc, char **argv)
 		{"files-with-matches", no_argument,  0, 'l'},
 		{0, 0, 0, 0}
 	};
+
 	int option_index = 0;
+
 	if(argc==1){
 		print_usage();
 		ret.return_value = 1;
 		return ret;
 	}
+
 	while(1)
 		{
 			/// getopt_long stores the option index here.
@@ -112,6 +121,7 @@ struct parser::output parser::parse(int argc, char **argv)
 					if (long_options[option_index].flag != 0) break;
 					printf("something is wrong\n");
 					break;
+
 				case 'F':
 					if (G_flag){
 						printf("only one type of PATTERN is allowed\n");
@@ -121,11 +131,12 @@ struct parser::output parser::parse(int argc, char **argv)
 					else{
 						F_flag = 1;
 						if(optarg!=NULL){
-								PATTERN = optarg;
-								p = 1;
-							}
+							PATTERN = optarg;
+							p = 1;
+						}
 					}
 					break;
+
 				case 'e':
 					if (F_flag){
 						printf("only one type of PATTERN is allowed\n");
@@ -135,32 +146,40 @@ struct parser::output parser::parse(int argc, char **argv)
 					else{
 						G_flag = 1;
 						if(optarg!=NULL){
-								PATTERN = optarg;
-								p = 1;
-							}
+							PATTERN = optarg;
+							p = 1;
+						}
 					}
 					break;
+
 				case 'r':
 					r_flag=1;
 					break;
+
 				case 'l':
 					l = 0;
 					break;
+
 				case 'L':
 					l = 1;
 					break;
+
 				case 'c':
 					c_flag=1;
 					break;
+
 				case 'i':
 					i_flag=1;
 					break;
+
 				case 'y':
 					i_flag=1;
 					break;
+
 				case 'v':
 					v_flag=1;
 					break;
+
 				case 'G':
 					if (F_flag){
 						printf("only one type of PATTERN is allowed\n");
@@ -170,20 +189,23 @@ struct parser::output parser::parse(int argc, char **argv)
 					else{
 						G_flag = 1;
 						if(optarg!=NULL){
-								PATTERN = optarg;
-								p = 1;
-							}
+							PATTERN = optarg;
+							p = 1;
+						}
 					}
 					break;
+
 				case 'n':
 					n_flag=1;
 					break;
+
 				case '?':
 					/// getopt_long already printed an error message.
 					printf("Use --help to see options avilable\n");
 					ret.return_value = 1; 
 					return ret;
 					break;
+
 				default:
 					abort();
 				}
@@ -191,30 +213,34 @@ struct parser::output parser::parse(int argc, char **argv)
 
 	/* Instead of reporting '--help' as they are encountered,
 	 we report the final status resulting from them. */
+
 	if (help_flag){
 		print_help();
 		ret.return_value = 1; 
 		return ret;
 	}
+
 	if(usage_flag){
 		print_usage();
 		ret.return_value = 1; 
 		return ret;
 	}
+
 	if(version_flag){
 		print_version();
 		ret.return_value = 1; 
 		return ret;
 	}
+
 	for(int i=0; optind < argc; optind++,i++)
 	{
 		if(i==1){
 			if (p==1) path = argv[optind];
 			else{
-					printf("non-option argument found %s\n",argv[optind]);
-					ret.return_value = 1; 
-					return ret;
-				}
+				printf("non-option argument found %s\n",argv[optind]);
+				ret.return_value = 1; 
+				return ret;
+			}
 		}
 		else if (i==0){
 			if (F_flag || G_flag){
@@ -228,35 +254,29 @@ struct parser::output parser::parse(int argc, char **argv)
 			p = 1;
 		}
 		else{
-		printf("non-option argument found %s\n",argv[optind]);
-		ret.return_value = 1; 
-		return ret;
+			printf("non-option argument found %s\n",argv[optind]);
+			ret.return_value = 1; 
+			return ret;
 		}
 	}
+
 	if(p==0)
 	{
 		print_usage();
 		ret.return_value = 1; 
 		return ret;
 	}
+
 	ret.PATTERN = PATTERN;
-	ret.PATH = path;
-	ret.F_flag = F_flag;
-	ret.r_flag =r_flag;
-	ret.i_flag =i_flag;
-	ret.v_flag =v_flag;
-	ret.G_flag =G_flag;
-	ret.n_flag =n_flag;
-	ret.c_flag =c_flag;
 	ret.return_value = 0;
+	ret.F_flag = F_flag;
+	ret.r_flag = r_flag;
+	ret.i_flag = i_flag;
+	ret.v_flag = v_flag;
+	ret.G_flag = G_flag;
+	ret.n_flag = n_flag;
+	ret.c_flag = c_flag;
+	ret.PATH = path;
 	ret.l = l;
-	/*printf("pattern : %s\npath : %s\n",ret.PATTERN,ret.PATH);
-	printf("F_flag:%d\n",F_flag);
-	printf("r_flag:%d\n",r_flag);
-	printf("i_flag:%d\n",i_flag);
-	printf("v_flag:%d\n",v_flag);
-	printf("G_flag:%d\n",G_flag);
-	printf("n_flag:%d\n",n_flag);*/
 	return ret;
-	
 }
