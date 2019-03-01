@@ -9,11 +9,19 @@ jobs:
         command: |
           sudo apt-get update
           sudo apt-get install cmake
+          sudo apt-get install libgtest-dev
           mkdir build
+          cd /usr/src/gtest
+          sudo cmake CMakeLists.txt
+          sudo make
+          sudo cp *.a /usr/lib
     - run: |
         cd ./build
         cmake ..
         make
+    - run:
+        name: Run Tests
+        command: ./build/maintest
 workflows:
   version: 2
   workflow:

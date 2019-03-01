@@ -2,6 +2,7 @@
 #define _SearchStrategy_H_
 
 #include <unistd.h>
+#include <string>
 
 /**
  * @brief A pure virtual Interface class to specify search algorithm.

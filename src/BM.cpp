@@ -38,7 +38,7 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 			k -= PAGESIZE;
 			left = k - 1;
 			if(k>PAGESIZE) loc += PAGESIZE;
-			else loc = k -1;
+			else loc = k - 1;
 			if(k>0)
 				error_handler(pread(fd,buf,PAGESIZE,max(k-PAGESIZE,0L)),fd,"File Read error");
 		}
