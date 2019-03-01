@@ -1,5 +1,3 @@
-// #pragma once
-
 #ifndef _THREAD_POOL_
 #define _THREAD_POOL_
 
@@ -7,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include "atomic_queue.h"
+#include "RAII_utils.h"
 
 #include <memory>
 #include <type_traits>
@@ -121,7 +120,7 @@ namespace thread_manager {
 
 					{// Begin scope for lock
 						// stop the detached threads that were waiting
-						detail::autoRAII_lock lock(mutex);
+						detail::RAII_lock lock(mutex);
 						cv.notify_all();  // stop all waiting threads
 					}// End of scope for lock
 
@@ -151,7 +150,7 @@ namespace thread_manager {
 			}
 
 			{// Begin scope for lock
-				detail::autoRAII_lock lock(mutex);
+				detail::RAII_lock lock(mutex);
 				cv.notify_all();  // stop all waiting threads
 			}// End of scope for lock
 
@@ -199,7 +198,7 @@ namespace thread_manager {
 					);
 
 			Q.push(f);
-			detail::autoRAII_lock lock(mutex);
+			detail::RAII_lock lock(mutex);
 			cv.notify_one();
 			return func_pack->get_future();
 		}
@@ -219,7 +218,7 @@ namespace thread_manager {
 						[func_pack](int id) { (*func_pack)(id); }
 					);
 			Q.push(f);
-			detail::autoRAII_lock lock(mutex);
+			detail::RAII_lock lock(mutex);
 			cv.notify_one();
 			return func_pack->get_future();
 		}
