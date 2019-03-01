@@ -16,7 +16,7 @@
 #define ALPHABET_SIZE 256
 
 /**
- * @brief      Class for Boyer Moore search
+ * @brief      Derived Class for Boyer Moore search. Implements SearchStrategy
  */
 class BoyerMooreSearch : public SearchStrategy
 {
