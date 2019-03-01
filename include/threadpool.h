@@ -15,8 +15,18 @@
 #include <atomic>
 #include <mutex>
 
+/**
+ * @brief All thread managing classes and functions must go here
+ * 
+ */
 namespace thread_manager {
 
+	/**
+	 * @brief A fast Threadpool with Singleton pattern
+	 * 
+	 * This threadpool provides several utility functions for developer usage.
+	 * A lay user must only use the push and resize functions.
+	 */
 	class ThreadPool
 	{
 		/**
