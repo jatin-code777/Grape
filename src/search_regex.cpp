@@ -12,9 +12,9 @@ void regex_search::pre_process(char* pattern, bool ignore_case, bool single_file
 		throw e;	// What to do now ??
 	}
 
-	print_file_name = !single_file;
-	print_line_num = (flags == 4);
-	print_matched_file = (flags == 1);
+	print_file_name		= !single_file;
+	print_line_num		= (flags == 4);
+	print_matched_file	= (flags == 1);
 
 	if(flags == 0 or flags == 4) strategy = [this](std::ifstream& input,std::string s) {this->normal(input,s);};
 	else if(flags == 3) strategy = [this](std::ifstream& input,std::string s) {this->line_count_only(input,s);};
@@ -25,9 +25,8 @@ void regex_search::pre_process(char* pattern, bool ignore_case, bool single_file
 void regex_search::search(int id, std::string fpath) {
 	std::ifstream input(fpath); //RAII acquire file
 	if(not input.is_open()) {
-		print_mutex.lock();
-		printf("grape: Unable to open: %s\n",fpath.data());
-		print_mutex.unlock();
+		std::lock_guard<std::mutex> lock(print_mutex);
+		fprintf(stderr,"grape: Unable to open: %s\n",fpath.data());
 		return;
 	}
 	strategy(input,fpath);
@@ -39,18 +38,15 @@ void regex_search::file_name_only(std::ifstream& input, const std::string &path)
 	while(std::getline(input,line)) {
 		if(std::regex_search(line,expr)) {
 			if(print_matched_file) {
-				print_mutex.lock();
+				std::lock_guard<std::mutex> lock(print_mutex);
 				std::cout<<COLOR_PURPLE<<path<<COLOR_RESET;
-				//printf(COLOR_PURPLE "%s\n" COLOR_RESET, path.data());; 
-				print_mutex.unlock(); }
+			}
 			return;
 		}
 	}
 	if(!print_matched_file) {
-		print_mutex.lock();
+		std::lock_guard<std::mutex> lock(print_mutex);
 		std::cout<<COLOR_PURPLE<<path<<COLOR_RESET;
-		//printf(COLOR_PURPLE "%s\n" COLOR_RESET, path.data());; 
-		print_mutex.unlock();
 	}
 }
 
@@ -62,10 +58,9 @@ void regex_search::line_count_only(std::ifstream& input, const std::string &path
 		if(std::regex_search(line,expr))
 			++lines_matched;
 	}
-	print_mutex.lock();
-	if(print_file_name) std::cout<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf(COLOR_PURPLE "%s:" COLOR_RESET, path.data());; 
+	std::lock_guard<std::mutex> lock(print_mutex);
+	if(print_file_name) std::cout<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;
 	printf("%d\n",lines_matched);
-	print_mutex.unlock();
 }
 
 void regex_search::normal(std::ifstream& input, const std::string &path)
@@ -95,14 +90,12 @@ void regex_search::output_matches(std::string &line,int line_num, const std::str
 
 			while (next != end) {
 				std::smatch match = *next;
-				// printf("%.*s",int(match.position()-cur_pos), line.data()+cur_pos);
 				ss.rdbuf()->sputn(line.data()+cur_pos,int(match.position()-cur_pos));
-				ss<<COLOR_RED_BOLD<<match.str()<<COLOR_RESET;//printf(COLOR_RED_BOLD "%s" COLOR_RESET, match.str().data());
+				ss<<COLOR_RED_BOLD<<match.str()<<COLOR_RESET;
 				cur_pos = match.position()+match.length();
 				next++;
 			}
 			ss<<line.data()+cur_pos<<"\n";
-			//printf("%s\n",line.data()+cur_pos);
 		}
 	} catch (std::regex_error& e) {
 		std::cerr<<e.what()<<"\n";
