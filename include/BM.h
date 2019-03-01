@@ -15,6 +15,9 @@
 
 #define ALPHABET_SIZE 256
 
+/**
+ * @brief      Class for Boyer Moore search
+ */
 class BoyerMooreSearch : public SearchStrategy
 {
 	private:
