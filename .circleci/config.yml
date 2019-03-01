@@ -1,0 +1,26 @@
+jobs :
+	build :
+		docker :
+		- images : circleci/ruby:stretch
+		steps :
+		- checkout
+		- run :
+			name : set up
+			command : 
+				sudo apt-get update
+				sudo apt-get install cmake
+				mkdir build
+				cd build
+		-run : 
+			name : cmake
+			command :
+				cmake ..
+        -run :
+            name : make
+            command :
+                make
+workflows:
+    version: 2
+    workflow:
+        jobs:
+        - build
