@@ -14,7 +14,7 @@ void parser::print_help()
   printf("Example: grape -i 'hello world' main.c\n");
   printf("\n");
   printf("Pattern selection and interpretation:\n");
-  printf(" -F,   --fixed-string         PATTERN is a normal string\n");
+  printf(" -F,   --fixed-string         {default}PATTERN is a normal string\n");
   printf(" -G,   --basic-regexp         PATTERN is a basic regular expression (default)\n");
   printf(" -e,   --regexp=PATTERN       use PATTERN for matching\n");
   printf(" -i,   --ignore-case          ignore case distinctions\n");

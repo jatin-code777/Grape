@@ -47,7 +47,7 @@
 		void file_name_only(std::ifstream& input, const std::string &path) {
 			std::string line;
 			while(std::getline(input,line)) {
-				if(std::regex_match(line,expr)) {
+				if(std::regex_search(line,expr)) {
 					if(print_matched_file) printf("%s\n",path.data());
 					return;
 				}
@@ -60,7 +60,7 @@
 			int lines_matched = 0;
 			std::string line;
 			while(std::getline(input,line)) {
-				if(std::regex_match(line,expr))
+				if(std::regex_search(line,expr))
 					++lines_matched;
 			}
 			if(print_file_name) printf("%s:",path.data());

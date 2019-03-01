@@ -116,7 +116,7 @@ int call::go(struct parser::output ret)
     if(ret.n_flag == 1) flags = 4;
     if(ret.c_flag == 1) flags = 3;
     if (ret.l !=-1) flags = ret.l +1;
-    searcher->pre_process(paat, ret.i_flag ,isfile,flags);
+    searcher->pre_process(paat, ret.i_flag ,isfile, flags);
     int num_threads = 8;
     nflag_ftw = (flags == 4); //comment it
     if(isfile){
