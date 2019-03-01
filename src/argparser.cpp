@@ -20,13 +20,15 @@ void parser::print_help()
   printf(" -i,   --ignore-case          ignore case distinctions\n");
   printf("\n");
   printf("Miscellaneous:\n");
-  printf("       --version             display version information and exit\n");
-  printf("       --help                display this help text and exit\n");
-  printf("       --usage               display usage text and exit\n");
+  printf("       --version              display version information and exit\n");
+  printf("       --help                 display this help text and exit\n");
+  printf("       --usage                display usage text and exit\n");
   printf("\n");
   printf("Output control:\n");
-  printf(" -n,   --line-number         print line number with output lines\n");
-  printf(" -r,   --recursive           recursive search inside directory\n");
+  printf(" -n,   --line-number          print line number with output lines\n");
+  printf(" -r,   --recursive            recursive search inside directory\n");
+  printf(" -L,   --files-without-match  print only names of FILEs with no selected lines\n");
+  printf(" -l,   --files-with-matches   print only names of FILEs with selected lines\n");
 }
 /**
  * @brief      prints usage instructions
@@ -84,8 +86,8 @@ struct parser::output parser::parse(int argc, char **argv)
     {"basic-regex",   optional_argument, 0, 'G'},
     {"line-number",   no_argument,       0, 'n'},
     {"count",   no_argument,             0, 'c'},
-    {"files-without-match", no_argument, 0, 'l'},
-    {"files-with-matches", no_argument,  0, 'L'},
+    {"files-without-match", no_argument, 0, 'L'},
+    {"files-with-matches", no_argument,  0, 'l'},
     {0, 0, 0, 0}
   };
   int option_index = 0;
