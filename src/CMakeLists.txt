@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required (VERSION 3.1)
+set(CXX_STANDARD 11)
 project(grape)
 set( CMAKE_CXX_FLAGS "-O3")
 add_library(BM BM.cpp)
