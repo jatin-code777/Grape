@@ -1,8 +1,5 @@
 jobs:
   build:
-    branches:
-      only:
-        - master
     docker:
     - image: circleci/ruby:stretch
     steps:
