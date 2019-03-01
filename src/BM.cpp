@@ -37,9 +37,10 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 			blockshift--;
 			k -= PAGESIZE;
 			left = k - 1;
-			loc += PAGESIZE;
-			if(k)
-				error_handler(pread(fd,buf,PAGESIZE,k-PAGESIZE),fd,"File Read error");
+			if(k>PAGESIZE) loc += PAGESIZE;
+			else loc = k -1;
+			if(k>0)
+				error_handler(pread(fd,buf,PAGESIZE,max(k-PAGESIZE,0L)),fd,"File Read error");
 		}
 		else
 		{
@@ -54,14 +55,15 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 		out.pop_front();
 	}
 
-	//blockshift<0 check----
+	//blockshift<0 reload original buffer
 	if(blockshift < 0)
-		error_handler(pread(fd,buf,PAGESIZE,k-PAGESIZE),fd,"File Read error");
+		error_handler(pread(fd,buf,PAGESIZE,k_-PAGESIZE),fd,"File Read error");
 	
 	
 	ss<<COLOR_RED_BOLD<<pat<<COLOR_RESET;
 	int red = 0;
 
+	//go right and apply KMP
 	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l = 0;
 	while(right < m)
 	{

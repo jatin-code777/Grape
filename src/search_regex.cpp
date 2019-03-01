@@ -31,7 +31,6 @@ void regex_search::search(int id, std::string path) {
 		return;
 	}
 	strategy(input,path);
-	input.close();
 }
 
 void regex_search::file_name_only(std::ifstream& input, const std::string &path) {
