@@ -1,11 +1,12 @@
 #include "BM.h"
 using namespace std;
 
-void BoyerMooreSearch::error_handler(int status,std::string message)
+void BoyerMooreSearch::error_handler(int status,int fd,std::string message)
 {
 	if(status == -1)
 	{
 		fprintf(stderr,"%s\n",message.data());
+		if(fd != -1) close(fd);
 		throw 1;
 	}
 }
@@ -38,7 +39,7 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 			left = k - 1;
 			loc += PAGESIZE;
 			if(k)
-				error_handler(pread(fd,buf,PAGESIZE,k-PAGESIZE),"File Read error");
+				error_handler(pread(fd,buf,PAGESIZE,k-PAGESIZE),fd,"File Read error");
 		}
 		else
 		{
@@ -55,7 +56,7 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 
 	//blockshift<0 check----
 	if(blockshift < 0)
-		error_handler(pread(fd,buf,PAGESIZE,k-PAGESIZE),"File Read error");
+		error_handler(pread(fd,buf,PAGESIZE,k-PAGESIZE),fd,"File Read error");
 	
 	
 	ss<<COLOR_RED_BOLD<<pat<<COLOR_RESET;
@@ -92,8 +93,8 @@ void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* b
 		if(loc == PAGESIZE)
 		{
 			if(k<m){
-				error_handler(lseek(fd,k,SEEK_SET),"File Read error");
-				error_handler(read(fd,buf,PAGESIZE),"File Read error");
+				error_handler(lseek(fd,k,SEEK_SET),fd,"File Read error");
+				error_handler(read(fd,buf,PAGESIZE),fd,"File Read error");
 			}
 			k += PAGESIZE;
 			right = k - PAGESIZE;
@@ -203,8 +204,8 @@ void BoyerMooreSearch::skip_line(int fd,int64_t& i,int64_t& k,int64_t m,char* bu
 		if(loc == PAGESIZE)
 		{
 			if(k<m){
-				error_handler(lseek(fd,k,SEEK_SET),"File Read error");
-				error_handler(read(fd,buf,PAGESIZE),"File Read error");
+				error_handler(lseek(fd,k,SEEK_SET),fd,"File Read error");
+				error_handler(read(fd,buf,PAGESIZE),fd,"File Read error");
 			}
 			k += PAGESIZE;
 			right = k - PAGESIZE;
@@ -227,17 +228,17 @@ int BoyerMooreSearch::BM(int id, const char* path)//states (0-3) are here
 	bool done = 0;
 	
 	int fd = open(path,O_RDONLY), jump, j, line_count = 0;
-	error_handler(fd, "File open error");
+	error_handler(fd,fd,"File open error");
 	
 	int64_t i = 0, k = 0,m = lseek(fd,0,SEEK_END);//i = start
-	error_handler(m,"File read error");
+	error_handler(m,fd,"File read error");
 
-	error_handler(lseek(fd,0,SEEK_SET),"File read error");
+	error_handler(lseek(fd,0,SEEK_SET),fd,"File read error");
 
 	k = PAGESIZE;
 	char buf[PAGESIZE];
 
-	error_handler(read(fd,buf,PAGESIZE),"File read error");
+	error_handler(read(fd,buf,PAGESIZE),fd,"File read error");
 
 	while(!done && i+n <= m)
 	{
@@ -250,8 +251,8 @@ int BoyerMooreSearch::BM(int id, const char* path)//states (0-3) are here
 		
 		if(i + n > min(m,k))
 		{
-			error_handler(lseek(fd,i,SEEK_SET),"File read error");
-			error_handler(read(fd,buf,PAGESIZE),"File read error");
+			error_handler(lseek(fd,i,SEEK_SET),fd,"File read error");
+			error_handler(read(fd,buf,PAGESIZE),fd,"File read error");
 			k = i + PAGESIZE;
 			continue;
 		}
@@ -320,15 +321,15 @@ int BoyerMooreSearch::BM_N(int id, const char* path)
 	stringstream ss;
 	
 	int fd = open(path,O_RDONLY), jump, j;
-	error_handler(fd,"File open error");
+	error_handler(fd,fd,"File open error");
 	
 	int64_t i = 0,k = 0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
-	error_handler(lseek(fd,0,SEEK_SET),"File read error");
+	error_handler(lseek(fd,0,SEEK_SET),fd,"File read error");
 	
 	k = PAGESIZE;
 	char buf[PAGESIZE];
 	
-	error_handler(read(fd,buf,PAGESIZE),"File read error");
+	error_handler(read(fd,buf,PAGESIZE),fd,"File read error");
 
 	while(i + n <= m)
 	{
@@ -349,8 +350,8 @@ int BoyerMooreSearch::BM_N(int id, const char* path)
 
 		if(i + n > min(m,k))
 		{
-			error_handler(lseek(fd,i,SEEK_SET),"File read error");
-			error_handler(read(fd,buf,PAGESIZE),"File read error");
+			error_handler(lseek(fd,i,SEEK_SET),fd,"File read error");
+			error_handler(read(fd,buf,PAGESIZE),fd,"File read error");
 			k = i + PAGESIZE;
 			continue;
 		}
