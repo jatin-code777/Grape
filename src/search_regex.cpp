@@ -9,7 +9,7 @@ void regex_search::pre_process(char* pattern, bool ignore_case, bool single_file
 		expr.assign(pattern, flag_mask);
 	} catch (std::regex_error& e) {
 		std::cerr << "regex_error : " << e.what() << '\n';
-		throw e; //Throw on invalid regex
+		throw e;
 	}
 
 	print_file_name		= !single_file;
@@ -86,8 +86,8 @@ void regex_search::output_matches(std::string &line,int line_num, const std::str
 		{
 			size_t cur_pos = 0;
 
-			if(print_file_name) ss<<COLOR_PURPLE<<path.data()<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf(COLOR_PURPLE "%s:" COLOR_RESET, path.data());
-			if(print_line_num)  ss<<COLOR_RED<<line_num<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf(COLOR_RED	"%d:" COLOR_RESET, line_num);
+			if(print_file_name) ss<<COLOR_PURPLE<<path.data()<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;
+			if(print_line_num)  ss<<COLOR_RED<<line_num<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;
 
 			while (next != end) {
 				std::smatch match = *next;

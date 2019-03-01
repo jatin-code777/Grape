@@ -9,8 +9,6 @@
 #include <mutex>
 #include <deque>
 #include "SearchStrategy.h"
-//#include "color.h"
-
 
 #ifndef BM_H
 #define BM_H
