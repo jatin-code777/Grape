@@ -8,24 +8,23 @@ grep which is the most popular tool used to make regex searches on Linux systems
 Thus, we plan to implement an improved version of grep which makes use of modern concurrency and parallelism.
 
 # instructions to install 
-<pre>
-clone the repository
+clone the repository:	<pre>git clone "https://github.com/IITH-SBJoshi/concurrency-7.git"
 </pre>
-	git clone "https://github.com/IITH-SBJoshi/concurrency-7.git"
-<pre>
-create directory for build
-</pre>
-	cd concurrency-7 
-	mkdir build && cd build
-<pre>
-build the project
-</pre>
-	cmake .. && make 
-<pre>
-sudo required to execute from any position.
-</pre>
-	sudo cp ./grape /bin/
 
+create directory for build
+<pre>
+  cd concurrency-7 
+  mkdir build && cd build
+</pre>
+
+build the project
+<pre>
+  cmake .. && make 
+</pre>
+sudo required to execute from any position.
+<pre>
+  sudo cp ./grape /bin/
+</pre>
 
 
 # Usage
