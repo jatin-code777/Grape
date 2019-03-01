@@ -3,7 +3,7 @@
 void regex_search::pre_process(char* pattern, bool ignore_case, bool single_file , int flags)
 {
 	using namespace std::regex_constants;
-	auto flag_mask = nosubs | optimize ; //Specify grammar
+	auto flag_mask = nosubs | optimize | basic ; //Specify grammar
 	if(ignore_case) flag_mask |= icase;
 	try {
 		expr.assign(pattern, flag_mask);
