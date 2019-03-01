@@ -47,8 +47,6 @@ Miscellaneous:
 Output control:
  -n,   --line-number          print line number with output lines
  -r,   --recursive            recursive search inside directory
- -r,   --recursive            recursive search inside directory
- -r,   --recursive            recursive search inside directory
  -L,   --files-without-match  print only names of FILEs with no selected lines
  -l,   --files-with-matches   print only names of FILEs with selected lines
 
