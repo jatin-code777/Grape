@@ -359,8 +359,8 @@ int BoyerMooreSearch::BM_N(int id, const char* path)
 
 		if(j==-1)
 		{
-			if(ignore_name==0) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf("%s:",path);
-			ss<<COLOR_RED<<line_no<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf("%" PRId64 ":",line_no);
+			if(ignore_name==0) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;
+			ss<<COLOR_RED<<line_no<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;
 			print_line(fd,i,k,m,buf,ss);
 			line_no++;
 		}
