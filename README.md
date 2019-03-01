@@ -53,8 +53,8 @@ Output control:
 
 </pre>	
 <pre>
-    note:-  gtest is required for normal cmake install .
-    if you don't want to install gtest then remove CmakeList.txt 
-    and rename _CMakeLists.txt as CMakeLists.txt .
+note:-  gtest is required for normal cmake install .
+  if you don't want to install gtest then remove CmakeList.txt 
+  and rename _CMakeLists.txt as CMakeLists.txt .
 <pre>
 
