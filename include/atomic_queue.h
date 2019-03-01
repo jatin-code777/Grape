@@ -9,8 +9,7 @@
 /**
  * @brief Namespace for internal detail.
  * 
- * Contains implementation of fast RAII_lock
- * and Atomic_Queue
+ * Contains implementation of RAII utils and Atomic_Queue
  */
 namespace detail {
 
@@ -32,6 +31,7 @@ namespace detail {
 			bool ret = Q.empty();
 			return ret;
 		}
+
 		/**
 		 * @brief Push a value into the queue, for lvalues
 		 * 
@@ -42,6 +42,7 @@ namespace detail {
 			RAII_lock lock(mutex);
 			Q.push(val);
 		}
+
 		/// Additional overload for rvalue to be inserted.
 		/// Helpful to avoid making a copy of object to be inserted.
 		void push(T &&val)
@@ -49,6 +50,7 @@ namespace detail {
 			RAII_lock lock(mutex);
 			Q.push(std::move(val));
 		}
+
 		/**
 		 * @brief pops the topmost element of queue and returns it
 		 * 
@@ -77,6 +79,12 @@ namespace detail {
 			return 1;
 		}
 
+		/**
+		 * @brief returns the top element of queue.
+		 * 
+		 * @return T& Returns reference to top element.
+		 * It is invalidated on pop
+		 */
 		T& top()
 		{
 			RAII_lock lock(mutex);
