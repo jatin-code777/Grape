@@ -23,26 +23,70 @@ class BoyerMooreSearch : public SearchStrategy
 	private:
 		std::function <bool(char,char)> comp = [](char a, char b) { return a==b ;};//general == character comparision
 		std::function <bool(char,char)> comp_ig = [](char a, char b) { return (a|' ') == (b|' '); };//ignore case comparator
+		
+		/**
+		 * eq is the equality function to be employed for checking equality between two characters
+		 */
 		std::function <bool(char,char)> eq;
 		
-		int occ[ALPHABET_SIZE], jt[ALPHABET_SIZE];
+		/**
+		 * occ[c] stores last index of occurance of character c in pattern 
+		 */
+		int occ[ALPHABET_SIZE];
+
+		/**
+		 * jump table for mismatch detected at last character position
+		 */
+		int jt[ALPHABET_SIZE];
+
+		/**
+		 * All reads are to a buffer of size PAGESIZE
+		 */
 		int PAGESIZE = getpagesize()*32;
+
+		/**
+		 * pattern length
+		 */
 		int n;
 		
+		/**
+		 * the pattern
+		 */
 		char* pat;
 		
-		bool ignore_case = 0, ignore_name = 0;
-		bool tty = (isatty(STDOUT_FILENO)==1);
-		
+		/**
+		 * boolean flag for whether case distinctions are to be ignored
+		 */
+		bool ignore_case = 0;
+
+		/**
+		 * boolean flag for whether name of the file/s is/are to be printed
+		 */
+		bool ignore_name = 0;
+
+		/**
+		 * state represents the state of flags
+		 * 0 
+		 */
 		int state = 0;
 		
+		/**
+		 * for printing output for each file seperately
+		 */
 		std::mutex print_mutex;
 		//n = pattern length
 		//occ[i] = last occurance index of character with ASCII value i in the pattern.
 		//occ[i] = -1 --> that characeter doesn't exist in the search pattern 
 		//jt is jumptable based on bad character heuristic due to mismatch at the last position
 
+		/**
+		 * precomputation vector for KMP
+		 */
 		std::vector<int> lps;
+
+		/**
+		 * precomputation vector for Boyer Moore
+		 */
 		std::vector<int> s,f;
 		//f[i] = starting point of longest suffix of pat[i....n] that is also its prefix
 		//f[i] >= pattern length --> such a suffix doesn't exist
