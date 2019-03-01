@@ -27,7 +27,7 @@ namespace thread_manager {
 		 */
 		ThreadPool(int n) { resize(n); }
 
-	public: 
+	public:
 		/**
 		 * @brief Get the single instance object pointer
 		 * 
@@ -44,6 +44,10 @@ namespace thread_manager {
 			return &instance;
 		}
 
+		/**
+		 * @brief Finishes pending tasks then destroys the Thread Pool object
+		 * 
+		 */
 		~ThreadPool() { stop(true); }
 
 		/// No copies or moves allowed for ThreadPool class
@@ -52,26 +56,50 @@ namespace thread_manager {
 		ThreadPool & operator=(const ThreadPool &) 	= delete;
 		ThreadPool & operator=(ThreadPool &&) 		= delete;
 
+		/**
+		 * @brief Returns number of threads assigned to Thread Pool
+		 * 
+		 * @return size_t 
+		 */
 		size_t size() {
 			return threads.size();
 		}
 
-		size_t n_waiting() {
-			return nWaiting;
+		/**
+		 * @brief Returns number of free threads waiting without work
+		 * 
+		 * @return size_t 
+		 */
+		size_t n_idle() {
+			return nIdle;
 		}
 
+		/**
+		 * @brief Get the i'th thread object
+		 * i must liew between 0 and size(). Behavior undefined otherwise
+		 * 
+		 * @param i index of thread
+		 * @return std::thread& 
+		 */
 		std::thread& get_thread(int i) {
 			return *threads[i];
 		}
 		
-		// empty the queue
+		/**
+		 * @brief Empties the queue without running functions
+		 * 
+		 * Deletes the function pointers to avoid memory leaks
+		 */
 		void clear_queue() {
 			while(!Q.empty()) delete Q.pop(); // empty the queue
 		}
 
-		// change the number of threads in the pool
-		// should be called from one thread, otherwise be careful to not interleave, also with this->stop()
-		// nThreads must be >= 0
+		/**
+		 * @brief Change the number of threads assigned to pool
+		 * This function is not threadsafe. Must be called from a single thread at a time.
+		 * 
+		 * @param nThreads Number of threads to be assigned. Must be >=0
+		 */
 		void resize(int nThreads) {
 			if(nThreads == size())	return;
 			if (!isStop && !isDone) {
@@ -82,7 +110,7 @@ namespace thread_manager {
 
 					for (int i = oldNThreads; i < nThreads; ++i) {
 						flags[i] = std::make_shared<std::atomic<bool> >(false);
-						set_thread(i);
+						configure_thread(i);
 					}
 				}
 				else {  // the number of threads is decreased
@@ -103,9 +131,12 @@ namespace thread_manager {
 			}
 		}
 
-		// wait for all computing threads to finish and stop all threads
-		// may be called asynchronously to not pause the calling thread while waiting
-		// if isWait == true, all the functions in the queue are run, otherwise the queue is cleared without running the functions
+		/**
+		 * @brief Stops all threads and destroys their objects.
+		 * 
+		 * @param isWait true Wait till the current Queue finishes execution
+		 * @param isWait false Clear all functions in queue without executing
+		 */
 		void stop(bool isWait = false) {
 			if(isStop) return;
 
@@ -128,22 +159,35 @@ namespace thread_manager {
 				if (thread->joinable()) thread->join();
 			}
 
-			// if there were no threads in the pool but some functors in the queue, the functors are not deleted by the threads
-			// therefore delete them here
+			/// Delete all remaining functors here (in case of no threads)
 			clear_queue();
 			flags.clear();
 			threads.clear();
 		}
 
 		// pops a functional wrapper to the original function
+		/**
+		 * @brief An advanced utility function for the user to pop next function
+		 * 
+		 * @return std::function<void(int)> 
+		 */
 		std::function<void(int)> pop() {
 			std::function<void(int id)> * f_ptr = Q.pop();
 			std::unique_ptr<std::function<void(int id)>> func(f_ptr); // at return, delete the function even if an exception occurred
 			std::function<void(int)> f;
-			if (f_ptr) f = *f_ptr;
+			if (f_ptr) f = *f_ptr;	//For exception safety
 			return f;
 		}
 		
+		/**
+		 * @brief Inserts a function into the pool which will run when a thread is available
+		 * 
+		 * @tparam Func_t Type of func (can be any Callate type)
+		 * @tparam Param_t Parameter pack type for Arguments
+		 * @param func Callable to be executed
+		 * @param params Parameter pack for arguments
+		 * @return a std::future object pertaining to the passed function
+		 */
 		template <class Func_t, class... Param_t>
 		auto push(Func_t&& func, Param_t&&... params)
 		{
@@ -160,6 +204,11 @@ namespace thread_manager {
 			return func_pack->get_future();
 		}
 
+		/**
+		 * @brief Overload for a Callable with 0 arguments
+		 * 
+		 * Has simpler method to increase speed
+		 */
 		template <class Func_t>
 		auto push(Func_t&& func)
 		{
@@ -169,46 +218,48 @@ namespace thread_manager {
 			auto f = new std::function<void(int)>(
 						[func_pack](int id) { (*func_pack)(id); }
 					);
-			Q.push(func);
+			Q.push(f);
+
 			detail::autoRAII_lock lock(mutex);
 			cv.notify_one();
 			return func_pack->get_future();
 		}
+
 	private:
 
-		void set_thread(int i) 
+		/**
+		 * @brief Configures the thread on creation. Assigns it the function
+		 * 
+		 * @param i The index of thread to be configured
+		 */
+		void configure_thread(int i) 
 		{
-			std::shared_ptr<std::atomic<bool>> flag(this->flags[i]); // a copy of the shared ptr to the flag
-			auto func = [this, i, &flag = *flags[i]/* a copy of the shared ptr to the flag */]() {
+			auto func = [this, i, &flag = *flags[i]]() {
 				std::function<void(int id)> * f;
-				bool isPop = this->Q.pop(f);
-				while (true) {
-					while (isPop) {  // if there is anything in the queue
-						std::unique_ptr<std::function<void(int id)>> func(f); // at return, delete the function even if an exception occurred
-						(*f)(i);
-						if (flag)
-							return;  // the thread is wanted to stop, return even if the queue is not empty yet
+				bool popped = this->Q.pop(f);
+				while (true)		/// Infinite loop which takes next function from ATomic Queue and executes it
+				{
+					while (popped) {	// if there is anything in the queue
+						std::unique_ptr<std::function<void(int id)>> func(f); // Exception safety for memory leak
+						(*f)(i);		// then execute it
+						if (flag) return;  // the thread is to be stopped, return even if the queue is not empty yet
 						else
-							isPop = this->Q.pop(f);
+							popped = this->Q.pop(f);	//Try to pop next element
 					}
-					// while(!Q.empty()) {
-					// 	(*Q.pop())(i);
-					// 	if(flag) return;
-					// }
-					// the queue is empty here, wait for the next command
-					// detail::autoRAII_lock lock(this->mutex);
+
 					std::unique_lock<std::mutex> lock(this->mutex);
-					++this->nWaiting;
-					this->cv.wait(lock, [this, &f, &isPop, &flag](){
-											isPop = this->Q.pop(f);
-											return isPop || this->isDone || flag ;
-										});
-					--this->nWaiting;
-					if (!isPop)
+					++this->nIdle;
+					this->cv.wait(lock, [this, &f, &popped, &flag](){
+											popped = this->Q.pop(f);
+											return popped || this->isDone || flag ;
+										});	// Waits until either a new function was popped
+											// or it is commanded to stop.
+					--this->nIdle;
+					if (!popped)
 						return;  // if the queue is empty and this->isDone == true or *flag then return
 				}
 			};
-			threads[i].reset(new std::thread(func)); // compiler may not support std::make_unique()
+			threads[i].reset(new std::thread(func));
 		}
 
 	private:
@@ -217,7 +268,7 @@ namespace thread_manager {
 
 		std::atomic<bool>  isDone {false} ;
 		std::atomic<bool>  isStop {false} ;
-		std::atomic<int> nWaiting {0} ;
+		std::atomic<int> nIdle {0} ;
 
 		detail::Atomic_Queue<std::function<void(int id)> *> Q;
 
