@@ -3,13 +3,13 @@
 void regex_search::pre_process(char* pattern, bool ignore_case, bool single_file , int flags)
 {
 	using namespace std::regex_constants;
-	auto flag_mask = nosubs | optimize ; //Specify grammar
+	auto flag_mask = nosubs | optimize | basic;
 	if(ignore_case) flag_mask |= icase;
 	try {
 		expr.assign(pattern, flag_mask);
 	} catch (std::regex_error& e) {
 		std::cerr << "regex_error : " << e.what() << '\n';
-		throw e;	// What to do now ??
+		throw e;
 	}
 
 	print_file_name		= !single_file;
@@ -22,14 +22,15 @@ void regex_search::pre_process(char* pattern, bool ignore_case, bool single_file
 
 }
 
-void regex_search::search(int id, std::string fpath) {
-	std::ifstream input(fpath); //RAII acquire file
+void regex_search::search(int id, std::string path) {
+	std::ifstream input;
+	detail::RAII_acquireFile file(input,path);
 	if(not input.is_open()) {
 		std::lock_guard<std::mutex> lock(print_mutex);
-		fprintf(stderr,"grape: Unable to open: %s\n",fpath.data());
+		fprintf(stderr,"grape: Unable to open: %s\n",path.data());
 		return;
 	}
-	strategy(input,fpath);
+	strategy(input,path);
 	input.close();
 }
 
@@ -85,8 +86,8 @@ void regex_search::output_matches(std::string &line,int line_num, const std::str
 		{
 			size_t cur_pos = 0;
 
-			if(print_file_name) ss<<COLOR_PURPLE<<path.data()<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf(COLOR_PURPLE "%s:" COLOR_RESET, path.data());
-			if(print_line_num)  ss<<COLOR_RED<<line_num<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf(COLOR_RED	"%d:" COLOR_RESET, line_num);
+			if(print_file_name) ss<<COLOR_PURPLE<<path.data()<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;
+			if(print_line_num)  ss<<COLOR_RED<<line_num<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;
 
 			while (next != end) {
 				std::smatch match = *next;

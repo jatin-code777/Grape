@@ -45,8 +45,8 @@ void parser::print_usage()
 void parser::print_version()
 {
 	printf("grape (multithreaded) 1.0.0\n");
-	printf("Copyright (c)\n");
-	printf("License \n");
+	printf("Copyright (c) 2019 grape\n");
+	printf("License : MIT License \n");
 	printf("This is free software: you are free to change and redistribute it.\n");
 	printf("There is NO WARRANTY, to the extent permitted by law.\n");
 	printf("Written by Dhananjay Raut, Sahil Shah, Jatin Sharma and Raja Naik\n");

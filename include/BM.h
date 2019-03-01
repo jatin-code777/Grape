@@ -9,8 +9,6 @@
 #include <mutex>
 #include <deque>
 #include "SearchStrategy.h"
-//#include "color.h"
-
 
 #ifndef BM_H
 #define BM_H
@@ -162,7 +160,7 @@ class BoyerMooreSearch : public SearchStrategy
 		 * @param[in]  status   status of system call
 		 * @param[in]  message  error message to be displayed in erraneous state
 		 */
-		void error_handler(int status,std::string message="");
+		void error_handler(int status,int fd,std::string message="");
 		
 		/**
 		 * @brief      convert 8 bit character to int
