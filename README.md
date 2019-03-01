@@ -7,7 +7,7 @@ Multithreaded Alternative to grep
 grep which is the most popular tool used to make regex searches on Linux systems, has been around for a while. The current implementation of grep is single-threaded and does not make use of modern multi-core systems. This is specially evident when the search is spread over a large number of files and directories.
 Thus, we plan to implement an improved version of grep which makes use of modern concurrency and parallelism.
 
-# instructions to install 
+# Instructions to install 
 clone the repository:	<pre>git clone "https://github.com/IITH-SBJoshi/concurrency-7.git"
 </pre>
 
@@ -52,3 +52,9 @@ Output control:
 
 
 </pre>	
+<pre>
+    note:-  gtest is required for normal cmake install .
+    if you don't want to install gtest then remove CmakeList.txt 
+    and rename _CMakeLists.txt as CMakeLists.txt .
+<pre>
+
