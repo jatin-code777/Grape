@@ -112,7 +112,7 @@ int call::go(struct parser::output ret)
 		if(ret.c_flag == 1) flags = 3;
 		if (ret.l !=-1) flags = ret.l +1;
 		searcher->pre_process(Pattern, ret.i_flag ,isfile, flags);
-		int num_threads = 8;
+		const unsigned int num_threads = 2*std::thread::hardware_concurrency();
 		if(isfile){
 			search(0,searcher,ret.PATH);
 		}
