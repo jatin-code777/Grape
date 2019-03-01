@@ -82,6 +82,7 @@ class BoyerMooreSearch : public SearchStrategy
 		 */
 		void build_lps();
 		
+	public:
 		/**
 		 * @brief      Does all preprocessing on the pattern using bad character and good suffix rules of Boyer Moore algorithm.
 		 *
@@ -95,7 +96,7 @@ class BoyerMooreSearch : public SearchStrategy
 
 
 
-
+	private:
 		//searching
 		/**
 		 * @brief      Function called from thread pool that implements Boyer Moore Algorithm on input file path, and preprocessed pattern.
@@ -117,6 +118,7 @@ class BoyerMooreSearch : public SearchStrategy
 		 */
 		int BM_N(int id ,const char* path);
 
+	public:
 		/**
 		 * @brief      Searches for pattern in file denoted by path
 		 *
@@ -128,7 +130,7 @@ class BoyerMooreSearch : public SearchStrategy
 
 
 		
-
+	private:
 		//Output functions to manage '\n's.		
 
 		/**
