@@ -11,7 +11,10 @@
 #include <sstream>
 #include "RAII_utils.h"
 
-
+	/**
+	 * @brief Derived Class for regex search. Implements SearchStrategy
+	 * 
+	 */
 	class regex_search : public SearchStrategy
 	{
 		

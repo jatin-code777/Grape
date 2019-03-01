@@ -1,6 +1,6 @@
 #         Grape
 
-[![Build Status](https://travis-ci.com/IITH-SBJoshi/concurrency-7.svg?token=kgRmNj9ALBoMQM8mWL6x&branch=master)](https://travis-ci.com/IITH-SBJoshi/concurrency-7)
+[![CircleCI](https://circleci.com/gh/IITH-SBJoshi/concurrency-7/tree/master.svg?style=svg&circle-token=d4d13dd90020fc5c0a6a4b2e506e4cab2f678f00)](https://circleci.com/gh/IITH-SBJoshi/concurrency-7/tree/master)
 
 Multithreaded Alternative to grep
 
