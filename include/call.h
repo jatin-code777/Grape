@@ -3,8 +3,26 @@
 #include "argparser.h"
 #include <ftw.h>
 #include "SearchStrategy.h"
-
+#include <string>
+/**
+ * @brief      decider funtion
+ *
+ * @param[in]  regex     The regular expression
+ * @param      searcher  The searcher
+ */
 void decider(bool regex, SearchStrategy* & searcher);
+
+
+
+/**
+ * @brief      search funtion for searchStrategy
+ *
+ * @param[in]  id        The thread_id
+ * @param      searcher  The searcher
+ * @param[in]  path      The path
+ */
+void search(int id, SearchStrategy * searcher , std::string path);
+
 
 namespace call
 {
