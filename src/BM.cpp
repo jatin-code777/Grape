@@ -1,51 +1,35 @@
-#include <iostream>
-#include <vector>
-#include <cstring>
-#include <unistd.h>
-#include <fcntl.h>
-#include <functional>
-#include <inttypes.h>
 #include "BM.h"
-#include <deque>
-
-#define ALPHABET_SIZE 256
 using namespace std;
 
+void BoyerMooreSearch::error_handler(int status,std::string message)
+{
+	if(status == -1)
+	{
+		fprintf(stderr,"%s\n",message.data());
+		throw 1;
+	}
+}
 
-auto comp = [](char a, char b) { return a==b ;};//general == character comparision
-auto comp_ig = [](char a, char b) { return (a|' ') == (b|' '); };//ignore case comparator
-function<bool(char,char)> eq;
-int occ[ALPHABET_SIZE],jt[ALPHABET_SIZE];
-int n,PAGESIZE = getpagesize()*32;
-char* pat;
-bool ignore_case = 0;
-bool ignore_name = 0;
-//n = pattern length
-//occ[i] = last occurance index of character with ASCII value i in the pattern.
-//occ[i] = -1 --> that characeter doesn't exist in the search pattern 
-//jt is jumptable based on bad character heuristic due to mismatch at the last position
+int BoyerMooreSearch::char_to_int(char c)
+{
+	return ((int)c)<0 ? 256 + ((int)c) : ((int)c);
+}
 
-vector<int> s,f;
-//f[i] = starting point of longest suffix of pat[i....n] that is also its prefix
-//f[i] >= pattern length --> such a suffix doesn't exist
-//s[i] = shift to be made based on good suffix heuristics, when index i does not match, the rest of the suffix matches
-//s[i] is the MINIMUM shift such that the part that is already matched matches, and the mismatched character gets changed
-
-void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
+void BoyerMooreSearch::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, stringstream &ss)
 {
 	deque<char> out;
-	int blockshift=0;
-	int loc = i - 1 - k + PAGESIZE;
-	int64_t left = i-1, right = i + n,k_ = k;
+	deque<char> lin;
+	int blockshift = 0;
+	int loc = i - 1 - k + PAGESIZE,l = 0;
+	int64_t left = i - 1, right = i + n, k_ = k;
 	while(left != -1)
 	{ 
-		while(loc >= 0)
-			if(buf[loc] == '\n')
+		while(loc >= 0){
+			if(buf[loc] == 	'\n')
 				break;
-			else{
-				out.push_front(buf[loc]);
-				loc--;
-			}
+			else
+				out.push_front(buf[loc--]);
+		}
 
 		if(loc == -1)
 		{
@@ -53,7 +37,8 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 			k -= PAGESIZE;
 			left = k - 1;
 			loc += PAGESIZE;
-			if(k) pread(fd,buf,PAGESIZE,k-PAGESIZE);
+			if(k)
+				error_handler(pread(fd,buf,PAGESIZE,k-PAGESIZE),"File Read Error");
 		}
 		else
 		{
@@ -63,41 +48,58 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 	}
 	left += 1;
 
-	// if(blockshift<0){
-		while(!out.empty()){
-			printf("%c",out.front());
-			out.pop_front();
-		}
-	/*} //handle 
-	else
-		for(loc = left - k + PAGESIZE; loc < i - k + PAGESIZE; loc++)
-			printf("%c",buf[loc]);
-	//just iterate over block // print from left till pattern point
-	*/
-	printf("%s",pat);//print the pattern	/*TODO : in red*/
+	while(!out.empty()){
+		ss<<out.front();
+		out.pop_front();
+	}
+
+	//blockshift<0 check----
+	if(blockshift < 0)
+		error_handler(pread(fd,buf,PAGESIZE,k-PAGESIZE),"File Read Error");
 	
-	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; 
+	
+	if(tty) ss<<COLOR_RED_BOLD<<pat<<COLOR_RESET;
+	else ss<<pat; //printf("%s",pat);//print the pattern /*TODO : in red*/
+	int red = 0;
+
+	k = k_; loc = right - k + PAGESIZE; right = k - PAGESIZE; l = 0;
 	while(right < m)
 	{
-		while(right + loc < min(m,k))//add here to stop going ahead of end
+		while(right + loc < min(m,k))
 		{
-			if(buf[loc]=='\n') break;
+			if(buf[loc] == '\n') break;
 			else{
-				printf("%c",buf[loc]);
-				loc ++;
+				while(l!=-1 && buf[loc] != pat[l]) l = l ? lps[l-1] : -1;
+				l++;
+				if(l==n){
+					red = n;
+					l = 0;
+				}
+				lin.push_back(buf[loc]);
+				if(lin.size() == n)
+				{
+					if(red > 0)
+					{
+						if(tty) ss<<COLOR_RED_BOLD<<lin.front()<<COLOR_RESET;
+						else ss<<lin.front();
+						red--;
+					}
+					else ss<<lin.front();
+					lin.pop_front();
+				}
+				loc ++;				
 			}
 		}
 
 		if(loc == PAGESIZE)
 		{
+			if(k<m){
+				error_handler(lseek(fd,k,SEEK_SET),"File Read error");
+				error_handler(read(fd,buf,PAGESIZE),"File Read error");
+			}
 			k += PAGESIZE;
 			right = k - PAGESIZE;
 			loc = 0;
-			if(k<m){
-				lseek(fd,k,SEEK_SET);
-				read(fd,buf,PAGESIZE);
-				// pread(fd,buf,PAGESIZE,right);
-			}
 		}
 		else
 		{
@@ -105,27 +107,39 @@ void BM::print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 			break;
 		}
 	}
+
 	right = min(right,m);
-	printf("\n");
-	i = right+1;
+	while(lin.size() > 0){
+		if(red > 0)
+		{
+			if(tty) ss<<COLOR_RED_BOLD<<lin.front()<<COLOR_RESET;
+			else ss<<lin.front();
+			red--;
+		}
+		else ss<<lin.front();
+		lin.pop_front();
+	}
+	ss<<"\n";
+
+	i = right + 1;
 }
 
-void BM::build_occ(char* pat)
+void BoyerMooreSearch::build_occ()
 {
 	n = strlen(pat);
 	memset(occ,-1,sizeof(occ));
 	if(ignore_case)
 		for(int i=0;i<n;i++)
-			occ[(int)tolower(pat[i])] = occ[(int)toupper(pat[i])] = i;
+			occ[char_to_int(tolower(pat[i]))] = occ[char_to_int(toupper(pat[i]))] = i;
 	else
 		for(int i=0;i<n;i++)
-			occ[(int)pat[i]] = i;
+			occ[char_to_int(pat[i])] = i;
 
 	for(int i=0;i<ALPHABET_SIZE;i++)
 		jt[i] = n - 1 - occ[i];
 }
 
-void BM::case1_good_suffix(char* pat)
+void BoyerMooreSearch::case1_good_suffix()
 {
 	int i = n + 1, j = n + 2;
 	while(i>0)
@@ -140,7 +154,7 @@ void BM::case1_good_suffix(char* pat)
 	}
 }
 
-void BM::case2_good_suffix(char* pat)
+void BoyerMooreSearch::case2_good_suffix()
 {
 	int i=0,j=f[0];
 	for(;i<=n;i++)
@@ -150,89 +164,198 @@ void BM::case2_good_suffix(char* pat)
 	}
 }
 
-void BM::pre_process(char* patt, bool ic, bool ig_name)
+void BoyerMooreSearch::build_lps()
 {
+	int i = 1 , l = lps[0] = 0;
+	while(i<n)
+	{
+		if(pat[i] == pat[l]) lps[i++] = ++l;
+		else l ? l = lps[l-1] : lps[i++] = 0;
+	}
+}
+
+
+void BoyerMooreSearch::pre_process(char* patt, bool ic, bool ig_name, int flags)
+{
+	state = flags;
 	eq = ic?comp_ig:comp;
 	ignore_case = ic;
 	pat = patt;
 	n = strlen(pat);
 	ignore_name = ig_name;
-	s.resize(n+1); f.resize(n+1);
-	build_occ(pat);//handle the bad character heuristic
-	case1_good_suffix(pat);//Compute f. Compute s when the the already matched part has a copy in the pattern
-	case2_good_suffix(pat);//Compute when already matched part only partially exists in the remaining pattern
+	s.resize(n+1); f.resize(n+1); lps.resize(n);
+	build_occ();//handle the bad character heuristic
+	case1_good_suffix();//Compute f. Compute s when the the already matched part has a copy in the pattern
+	case2_good_suffix();//Compute when already matched part only partially exists in the remaining pattern
+	build_lps();//compute the longest prefix suffix for prefix substrings of input pattern
 }
 
-int BM::BM(int id, const char* path)
+
+void BoyerMooreSearch::skip_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf)
 {
-	int fd = open(path,O_RDONLY),jump,j;
-	if(fd == -1) return 1;
-	int64_t i=0,k=0,m = lseek(fd,0,SEEK_END);//i = start
-	lseek(fd,0,SEEK_SET);
-	k += PAGESIZE;
+	int64_t& right = i;
+	int loc = right + n - k + PAGESIZE; right = k - PAGESIZE;
+	while(right < m)
+	{
+		while( right + loc < min(m,k) )
+		{
+			if(buf[loc] == '\n') break;
+			loc++;
+		}
+
+		if(loc == PAGESIZE)
+		{
+			if(k<m){
+				error_handler(lseek(fd,k,SEEK_SET),"File Read Error");
+				error_handler(read(fd,buf,PAGESIZE),"File Read Error");
+			}
+			k += PAGESIZE;
+			right = k - PAGESIZE;
+			loc = 0;
+		}
+		else
+		{
+			right = k - PAGESIZE + loc;
+			break;
+		}
+	}
+	right = min(right,m);
+	right++;
+}
+
+
+int BoyerMooreSearch::BM(int id, const char* path)//states (0-3) are here
+{
+	stringstream ss;
+	bool done = 0;
+	int fd = open(path,O_RDONLY), jump, j, line_count = 0;
+	error_handler(fd);
+	int64_t i = 0, k = 0,m = lseek(fd,0,SEEK_END);//i = start
+	error_handler(m);
+
+	error_handler(lseek(fd,0,SEEK_SET));
+
+	k = PAGESIZE;
 	char buf[PAGESIZE];
-	read(fd,buf,PAGESIZE);
-	while(i+n <= m)
+
+	error_handler(read(fd,buf,PAGESIZE));
+
+	while(!done && i+n <= m)
 	{
 		while(i + 3*n < min(m,k)){//loop unrolled for speed
-			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
-			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
-			i += (jump = jt[(int)buf[i - k + PAGESIZE + n - 1]]);
+			i += (jump = jt[char_to_int(buf[i - k + PAGESIZE + n - 1])]);
+			i += (jump = jt[char_to_int(buf[i - k + PAGESIZE + n - 1])]);
+			i += (jump = jt[char_to_int(buf[i - k + PAGESIZE + n - 1])]);
 			if(!jump) break;
 		}
-		if(i+n > min(m,k))
+		
+		if(i + n > min(m,k))
 		{
-			lseek(fd,i,SEEK_SET);
-			read(fd,buf,PAGESIZE);
+			error_handler(lseek(fd,i,SEEK_SET));
+			error_handler(read(fd,buf,PAGESIZE));
 			k = i + PAGESIZE;
 			continue;
 		}
 
 		for(j = n-1; j>=0 && eq(pat[j],buf[i - k + PAGESIZE + j]); j--);
-
+		
 		if(j==-1)
 		{
-			if(ignore_name==0) printf("%s:",path);
-			printf("%" PRId64 ": ",i);
-			print_line(fd,i,k,m,buf);
+			switch(state)
+			{
+				case 0:
+					if(ignore_name==0){
+						if(tty)	ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf("%s:",path);
+						else ss<<path<<":";
+					}
+					print_line(fd,i,k,m,buf,ss);
+					break;
+				
+				case 1:
+					if(tty) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<"\n";
+					else ss<<path<<"\n";
+					done = 1;
+					break;
+
+				case 2:
+					done = 1;
+					break;
+
+				case 3:	
+					line_count++;
+					skip_line(fd,i,k,m,buf);
+					break;
+
+				default:
+					ss<<"Invalid flag status\n";
+					done = 1;
+					break;
+			}
 		}
 		else
-			i += max(s[j+1],j - occ[(int)buf[i - k + PAGESIZE + j]]);
+			i += max(s[j+1],j - occ[char_to_int(buf[i - k + PAGESIZE + j])]);
 	}
+
+	switch(state)
+	{
+		case 0:
+		case 1:
+			break;
+		case 2:
+			if(!done) ss<<(tty?COLOR_PURPLE:"")<<path<<(tty?COLOR_RESET:"")<<"\n";
+			break;
+		case 3:
+			if(ignore_name) ss<<line_count<<"\n";
+			else if(tty) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET<<line_count<<"\n";
+			else ss<<path<<":"<<line_count<<"\n";
+			break;
+		default:
+			ss<<"Invalid flag status\n";
+	}
+	print_mutex.lock();
+	printf("%s",ss.str().data());
+	print_mutex.unlock();
 	close(fd);
 	return 0;
 }
 
 
-int BM::BM_N(int id, const char* path)
+int BoyerMooreSearch::BM_N(int id, const char* path)
 {
-	int fd = open(path,O_RDONLY),jump,j;
-	if(fd == -1) return 1;
-	int64_t i=0,k=0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
-	lseek(fd,0,SEEK_SET);
-	k += PAGESIZE;
+	stringstream ss;
+	int fd = open(path,O_RDONLY), jump, j;
+	error_handler(fd);
+	
+	int64_t i = 0,k = 0,m = lseek(fd,0,SEEK_END),line_no = 1,ch;//i = start
+	
+	error_handler(lseek(fd,0,SEEK_SET));
+	
+	k = PAGESIZE;
 	char buf[PAGESIZE];
-	read(fd,buf,PAGESIZE);
-	while(i+n <= m)
+	
+	error_handler(read(fd,buf,PAGESIZE));
+
+	while(i + n <= m)
 	{
 		while(i + 3*n < min(m,k)){//loop unrolled for speed
-			jump = jt[(int)buf[i - k + PAGESIZE + n - 1]];
+			jump = jt[char_to_int(buf[i - k + PAGESIZE + n - 1])];
 			for(ch = 0; ch<jump; ch++) if( buf[ i - k + PAGESIZE + ch ]=='\n' ) line_no++;
 			i += jump;
 
-			jump = jt[(int)buf[i - k + PAGESIZE + n - 1]];
+			jump = jt[char_to_int(buf[i - k + PAGESIZE + n - 1])];
 			for(ch = 0; ch<jump; ch++) if( buf[ i - k + PAGESIZE + ch ]=='\n' ) line_no++;
 			i += jump;
 
-			jump = jt[(int)buf[i - k + PAGESIZE + n - 1]];
+			jump = jt[char_to_int(buf[i - k + PAGESIZE + n - 1])];
 			for(ch = 0; ch<jump; ch++) if( buf[ i - k + PAGESIZE + ch ]=='\n' ) line_no++;
 			i += jump;
 			if(!jump) break;
 		}
-		if(i+n > min(m,k))
+
+		if(i + n > min(m,k))
 		{
-			lseek(fd,i,SEEK_SET);
-			read(fd,buf,PAGESIZE);
+			error_handler(lseek(fd,i,SEEK_SET));
+			error_handler(read(fd,buf,PAGESIZE));
 			k = i + PAGESIZE;
 			continue;
 		}
@@ -241,18 +364,32 @@ int BM::BM_N(int id, const char* path)
 
 		if(j==-1)
 		{
-			if(ignore_name==0) printf("%s:",path);
-			printf("%" PRId64 ":",line_no);
-			print_line(fd,i,k,m,buf);	
+			if(ignore_name==0) ss<<COLOR_PURPLE<<path<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf("%s:",path);
+			ss<<COLOR_RED<<line_no<<COLOR_RESET<<COLOR_CYAN<<":"<<COLOR_RESET;//printf("%" PRId64 ":",line_no);
+			print_line(fd,i,k,m,buf,ss);
 			line_no++;
 		}
 		else
 		{
-			jump = max(s[j+1],j - occ[(int)buf[ i - k + PAGESIZE + j ]]);
-			for(ch = 0; ch<jump; ch++)	if(buf[ i - k + PAGESIZE + ch ]=='\n') line_no++;
+			jump = max(s[j+1],j - occ[char_to_int(buf[ i - k + PAGESIZE + j ])]);
+			for(ch = 0; ch<jump; ch++) if(buf[ i - k + PAGESIZE + ch ]=='\n') line_no++;
 			i += jump;
 		}
 	}
+	print_mutex.lock();
+	printf("%s",ss.str().data());
+	print_mutex.unlock();
 	close(fd);
 	return 0;
+}
+
+void BoyerMooreSearch::search(int id,std::string path)
+{
+	try{
+		if(state == 4) BM_N(id,path.data());
+		else BM(id,path.data());
+	}
+	catch(int){
+		fprintf(stderr,"Stop searching file because of error in system calls\n");
+	}
 }

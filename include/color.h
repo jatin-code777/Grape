@@ -1,0 +1,5 @@
+#define COLOR_RED           "\033[32m"
+#define COLOR_RED_BOLD      "\033[1;31m"
+#define COLOR_CYAN          "\033[36m"
+#define COLOR_PURPLE        "\033[35m"
+#define COLOR_RESET         "\033[m"

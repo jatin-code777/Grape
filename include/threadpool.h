@@ -219,7 +219,6 @@ namespace thread_manager {
 						[func_pack](int id) { (*func_pack)(id); }
 					);
 			Q.push(f);
-
 			detail::autoRAII_lock lock(mutex);
 			cv.notify_one();
 			return func_pack->get_future();
