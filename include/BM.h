@@ -153,5 +153,20 @@ class BoyerMooreSearch : public SearchStrategy
 		 * @param      ss    output string stream for file
 		 */
 		void print_line(int fd,int64_t& i,int64_t& k,int64_t m,char* buf, std::stringstream &ss);
+
+		/**
+		 * @brief      error_handler
+		 *
+		 * @param[in]  status   status of system call
+		 * @param[in]  message  error message to be displayed in erraneous state
+		 */
+		void error_handler(int status,std::string message="");
+		
+		/**
+		 * @brief      convert 8 bit character to int
+		 *
+		 * @param[in]  c     character to be converted
+		 */
+		int char_to_int(char c);
 };
 #endif
