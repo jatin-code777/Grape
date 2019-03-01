@@ -30,7 +30,10 @@ namespace detail {
 		std::mutex &mutex;
 	};
 
-
+    /**
+     * @brief An ifstream file resource handler which closes it on going out of scope.
+     * 
+     */
     class RAII_acquireFile
 	{
 	public:
