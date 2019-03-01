@@ -2,6 +2,10 @@
 #define CALL_H
 #include "argparser.h"
 #include <ftw.h>
+#include "SearchStrategy.h"
+
+void decider(bool regex, SearchStrategy* & searcher);
+
 namespace call
 {
 	/**

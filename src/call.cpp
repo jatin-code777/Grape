@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unordered_set> 
 #include "search_regex.cpp"
+#include "SearchStrategy.h"
 char * paat;
 bool nflag_ftw = 0;
 thread_manager::ThreadPool * tp;
