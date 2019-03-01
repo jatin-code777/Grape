@@ -22,14 +22,15 @@ void regex_search::pre_process(char* pattern, bool ignore_case, bool single_file
 
 }
 
-void regex_search::search(int id, std::string fpath) {
-	std::ifstream input(fpath); //RAII acquire file
+void regex_search::search(int id, std::string path) {
+	std::ifstream input;
+	detail::RAII_acquireFile(input,path);
 	if(not input.is_open()) {
 		std::lock_guard<std::mutex> lock(print_mutex);
-		fprintf(stderr,"grape: Unable to open: %s\n",fpath.data());
+		fprintf(stderr,"grape: Unable to open: %s\n",path.data());
 		return;
 	}
-	strategy(input,fpath);
+	strategy(input,path);
 	input.close();
 }
 

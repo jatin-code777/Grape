@@ -9,6 +9,7 @@
 #include "SearchStrategy.h"
 #include <mutex>
 #include <sstream>
+#include "RAII_utils.h"
 
 
 	class regex_search : public SearchStrategy
