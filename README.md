@@ -12,7 +12,7 @@ clone the repository:	<pre>git clone "https://github.com/IITH-SBJoshi/concurrenc
 
 create directory for build
 <pre>
-  cd concurrency-7 
+  cd Grape 
   mkdir build && cd build
 </pre>
 
