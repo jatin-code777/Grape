@@ -1,5 +1,5 @@
 #         Grape
-[![CircleCI](https://circleci.com/gh/jatin-code777/concurrency-7.svg?style=svg)](https://circleci.com/gh/jatin-code777/concurrency-7)
+[![CircleCI](https://circleci.com/gh/jatin-code777/Grape.svg?style=svg)](https://app.circleci.com/pipelines/github/jatin-code777/Grape)
 
 Multithreaded Alternative to grep
 
@@ -7,7 +7,7 @@ grep which is the most popular tool used to make regex searches on Linux systems
 Thus, we plan to implement an improved version of grep which makes use of modern concurrency and parallelism.
 
 # Instructions to install 
-clone the repository:	<pre>git clone "https://github.com/IITH-SBJoshi/concurrency-7.git"
+clone the repository:	<pre>git clone "https://github.com/jatin-code777/Grape"
 </pre>
 
 create directory for build
